@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes do Upload - Sistema de Upload CSV{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Detalhes do Upload
+            </h1>
+            <div>
+                <a href="/database" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+                <a href="/database/{{ upload.id }}/download" class="btn btn-success">
+                    <i class="bi bi-download"></i> Baixar Arquivo
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informações do Arquivo -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle"></i> Informações do Arquivo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Nome do arquivo:</strong></td>
+                                <td>{{ upload.original_name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Data do upload:</strong></td>
+                                <td>{{ upload.uploaded_at.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Usuário:</strong></td>
+                                <td>
+                                    {{ upload.user.name }}
+                                    {% if upload.user.role == 'operator' %}
+                                    <span class="badge bg-warning text-dark ms-1">Operador</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Tamanho:</strong></td>
+                                <td>
+                                    {% if upload.size_bytes %}
+                                        {% set size_mb = upload.size_bytes / (1024 * 1024) %}
+                                        {% if size_mb < 1 %}
+                                            {{ (upload.size_bytes / 1024)|round(1) }} KB
+                                        {% else %}
+                                            {{ size_mb|round(1) }} MB
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total de linhas:</strong></td>
+                                <td>{{ upload.rows_total or 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total de colunas:</strong></td>
+                                <td>{{ upload.cols_total or 'N/A' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informações das Colunas -->
+{% if columns %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-list-columns"></i> Colunas e Tipos de Dados
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for col in columns %}
+                    <div class="col-md-3 mb-2">
+                        <div class="card border">
+                            <div class="card-body py-2">
+                                <h6 class="card-title mb-1">{{ col }}</h6>
+                                <span class="badge bg-{% if dtypes.get(col) == 'int' %}primary{% elif dtypes.get(col) == 'float' %}info{% elif dtypes.get(col) == 'bool' %}success{% elif dtypes.get(col) == 'datetime' %}warning{% else %}secondary{% endif %}">
+                                    {{ dtypes.get(col, 'string') }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Preview dos Dados -->
+{% if sample_rows %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-table"></i> Preview dos Dados
+                    <small class="text-muted">(Primeiras {{ sample_rows|length }} linhas)</small>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover table-sm">
+                        <thead class="table-dark">
+                            <tr>
+                                {% for col in columns %}
+                                <th>{{ col }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in sample_rows %}
+                            <tr>
+                                {% for col in columns %}
+                                <td>
+                                    {% if row.get(col) is none %}
+                                        <span class="text-muted">-</span>
+                                    {% else %}
+                                        {{ row.get(col) }}
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if upload.rows_total and sample_rows|length < upload.rows_total %}
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    Mostrando apenas as primeiras {{ sample_rows|length }} linhas de {{ upload.rows_total }} total.
+                    <a href="/database/{{ upload.id }}/download" class="alert-link">Baixe o arquivo completo</a> para ver todos os dados.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-exclamation-triangle display-1 text-warning"></i>
+                <h4 class="text-muted mt-3">Preview não disponível</h4>
+                <p class="text-muted">Não foi possível gerar o preview dos dados para este arquivo.</p>
+                <a href="/database/{{ upload.id }}/download" class="btn btn-primary">
+                    <i class="bi bi-download"></i> Baixar Arquivo Original
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

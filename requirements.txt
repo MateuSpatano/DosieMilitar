@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+jinja2
+sqlalchemy>=2
+pandas
+python-multipart
+passlib[bcrypt]
+python-dotenv
+itsdangerous
+chardet
+httpx
+pytest
+pydantic-settings
+email-validator

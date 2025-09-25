@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Excluir Conta - Sistema de Upload CSV{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow border-danger">
+            <div class="card-header bg-danger text-white text-center">
+                <h4 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> Excluir Conta
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+                </div>
+                {% endif %}
+                
+                <div class="alert alert-warning">
+                    <h5 class="alert-heading">
+                        <i class="bi bi-exclamation-triangle"></i> Atenção!
+                    </h5>
+                    <p class="mb-0">
+                        Esta ação é <strong>irreversível</strong>. Todos os seus dados, incluindo uploads e informações pessoais, serão permanentemente excluídos.
+                    </p>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>O que será excluído:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-x-circle text-danger"></i> Sua conta de usuário</li>
+                        <li><i class="bi bi-x-circle text-danger"></i> Todos os arquivos CSV enviados</li>
+                        <li><i class="bi bi-x-circle text-danger"></i> Histórico de uploads</li>
+                        <li><i class="bi bi-x-circle text-danger"></i> Dados de análise dos arquivos</li>
+                    </ul>
+                </div>
+                
+                <form method="post" action="/account/delete">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    
+                    <div class="mb-3">
+                        <label for="confirm_email" class="form-label">
+                            Para confirmar, digite seu email: <strong>{{ user.email }}</strong>
+                        </label>
+                        <input type="email" class="form-control" id="confirm_email" 
+                               name="confirm_email" required 
+                               placeholder="Digite seu email para confirmar">
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="confirm_check" required>
+                        <label class="form-check-label" for="confirm_check">
+                            Eu entendo que esta ação é irreversível e desejo excluir minha conta permanentemente.
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                            <i class="bi bi-trash"></i> Excluir Conta Permanentemente
+                        </button>
+                        <a href="/account" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Habilitar botão apenas quando checkbox estiver marcado e email estiver correto
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheck = document.getElementById('confirm_check');
+    const confirmEmail = document.getElementById('confirm_email');
+    const deleteButton = document.getElementById('deleteButton');
+    const userEmail = '{{ user.email }}';
+    
+    function validateForm() {
+        const isChecked = confirmCheck.checked;
+        const isEmailCorrect = confirmEmail.value === userEmail;
+        
+        deleteButton.disabled = !(isChecked && isEmailCorrect);
+        
+        if (isChecked && isEmailCorrect) {
+            deleteButton.classList.remove('btn-danger');
+            deleteButton.classList.add('btn-danger');
+        } else {
+            deleteButton.classList.add('btn-danger');
+        }
+    }
+    
+    confirmCheck.addEventListener('change', validateForm);
+    confirmEmail.addEventListener('input', validateForm);
+    
+    // Validação adicional no submit
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!confirmCheck.checked || confirmEmail.value !== userEmail) {
+            e.preventDefault();
+            alert('Por favor, confirme o email e marque a caixa de confirmação.');
+        }
+    });
+});
+</script>
+{% endblock %}

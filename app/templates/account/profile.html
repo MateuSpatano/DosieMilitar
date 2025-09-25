@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil - Sistema de Upload CSV{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-4">
+            <i class="bi bi-person-gear"></i> Gerenciar Conta
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Informações do Perfil -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-person"></i> Informações do Perfil
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <strong>Nome:</strong>
+                    </div>
+                    <div class="col-sm-8">
+                        {{ user_data.name }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <strong>Email:</strong>
+                    </div>
+                    <div class="col-sm-8">
+                        {{ user_data.email }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <strong>Função:</strong>
+                    </div>
+                    <div class="col-sm-8">
+                        {% if user_data.role == 'operator' %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-shield-check"></i> Operador
+                        </span>
+                        {% else %}
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-person"></i> Usuário
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <strong>Membro desde:</strong>
+                    </div>
+                    <div class="col-sm-8">
+                        {{ user_data.created_at.strftime('%d/%m/%Y') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ações da Conta -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-gear"></i> Ações da Conta
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/account/change-password" class="btn btn-outline-primary">
+                        <i class="bi bi-key"></i> Alterar Senha
+                    </a>
+                    
+                    {% if user_data.role != 'operator' %}
+                    <a href="/account/delete" class="btn btn-outline-danger">
+                        <i class="bi bi-trash"></i> Excluir Conta
+                    </a>
+                    {% else %}
+                    <button class="btn btn-outline-secondary" disabled>
+                        <i class="bi bi-shield-exclamation"></i> Operador não pode excluir conta
+                    </button>
+                    {% endif %}
+                </div>
+                
+                {% if user_data.role == 'operator' %}
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Conta de Operador:</strong> Esta conta possui privilégios administrativos e não pode ser excluída através da interface.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estatísticas do Usuário -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up"></i> Suas Estatísticas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <i class="bi bi-cloud-upload display-4 text-primary"></i>
+                            <h4 class="mt-2">0</h4>
+                            <p class="text-muted">Uploads Realizados</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <i class="bi bi-list-ul display-4 text-success"></i>
+                            <h4 class="mt-2">0</h4>
+                            <p class="text-muted">Total de Linhas</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <i class="bi bi-hdd display-4 text-info"></i>
+                            <h4 class="mt-2">0 MB</h4>
+                            <p class="text-muted">Espaço Utilizado</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
