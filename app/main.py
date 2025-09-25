@@ -15,7 +15,8 @@ from app.config import settings
 from app.db import create_tables
 from app.services.auth_service import AuthService
 from app.db import get_db
-from app.routers import auth, dashboard, database, account
+from .routers.v1.router import router as v1_router
+from .routers.pages import router as frontend_router
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -38,16 +39,14 @@ app.add_middleware(
 )
 
 # Montar arquivos estáticos
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static", html=True), name="static")
 
 # Configurar templates
 templates = Jinja2Templates(directory="app/templates")
 
 # Incluir routers
-app.include_router(auth.router)
-app.include_router(dashboard.router)
-app.include_router(database.router)
-app.include_router(account.router)
+app.include_router(v1_router, prefix="/api/v1")
+app.include_router(frontend_router)
 
 
 @app.middleware("http")
@@ -94,7 +93,7 @@ async def startup_event():
         raise
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def root(request: Request):
     """Página inicial - redireciona para login ou dashboard"""
     # Verificar se usuário está logado
@@ -106,7 +105,7 @@ async def root(request: Request):
         return RedirectResponse(url="/login", status_code=302)
 
 
-@app.get("/health")
+@app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
     return {"status": "ok", "message": "Sistema funcionando"}
