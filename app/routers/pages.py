@@ -12,13 +12,14 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, _ = Depends(redirect_if_authenticated)):
-    """Página de login."""
     csrf_token = generate_csrf_token()
     request.session["csrf_token"] = csrf_token
+    error_message = request.query_params.get("errorLogin")
     
     return templates.TemplateResponse("auth/login.html", {
         "request": request,
-        "csrf_token": csrf_token
+        "csrf_token": csrf_token,
+        "errorLogin": error_message
     })
 
 @router.get("/register", response_class=HTMLResponse)

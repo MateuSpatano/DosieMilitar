@@ -10,7 +10,7 @@ from itsdangerous import URLSafeTimedSerializer
 from app.config import settings
 
 # Contexto para hash de senhas
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt_sha256"], deprecated="auto")
 
 # Serializer para tokens
 serializer = URLSafeTimedSerializer(settings.secret_key)

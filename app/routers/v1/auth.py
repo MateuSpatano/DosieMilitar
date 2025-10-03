@@ -26,16 +26,16 @@ async def login(
     _csrf: Annotated[bool, Depends(validate_csrf_token)],
     auth_service: AuthService = Depends(get_auth_service)
 ):
-    """Processar login com dependências"""
+    """Processar login com dependências."""
     try:
         user = auth_service.authenticate_user(email, password)
         
         if not user:
-            return templates.TemplateResponse("auth/login.html", {
-                "request": request,
-                "error": "Email ou senha incorretos",
-                "csrf_token": generate_csrf_token()
-            })
+            # Em caso de falha, redirecione com um erro na URL
+            return RedirectResponse(
+                url="/login?errorLogin=Email ou senha incorretos",
+                status_code=302
+            )
         
         request.session["user"] = {
             "id": user.id,
@@ -50,11 +50,11 @@ async def login(
         
     except Exception as e:
         logger.error(f"Erro no login: {e}")
-        return templates.TemplateResponse("auth/login.html", {
-            "request": request,
-            "error": "Erro interno do servidor",
-            "csrf_token": generate_csrf_token()
-        })
+        # Em caso de erro geral, redirecione com uma mensagem genérica
+        return RedirectResponse(
+            url="/login?error=Erro interno do servidor",
+            status_code=302
+        )
 
 
 @router.post("/register")

@@ -12,13 +12,13 @@
                 </h4>
             </div>
             <div class="card-body">
-                {% if error %}
+                {% if errorLogin %}
                 <div class="alert alert-danger" role="alert">
-                    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+                    <i class="bi bi-exclamation-triangle"></i> {{ errorLogin }}
                 </div>
                 {% endif %}
                 
-                <form method="post" action="/login">
+                <form method="post" action="/api/v1/authentication/login">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     
                     <div class="mb-3">
