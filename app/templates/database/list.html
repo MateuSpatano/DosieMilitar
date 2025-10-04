@@ -4,204 +4,204 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-12">
-        <h1 class="h2 mb-4">
-            <i class="bi bi-database"></i> Banco de Dados
-        </h1>
-    </div>
+  <div class="col-12">
+    <h1 class="h2 mb-4">
+      <i class="bi bi-database"></i> Banco de Dados
+    </h1>
+  </div>
 </div>
 
 <!-- Filtros -->
 <div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-funnel"></i> Filtros
-                </h5>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="bi bi-funnel"></i> Filtros
+        </h5>
+      </div>
+      <div class="card-body">
+        <form id="filter-form">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label for="q" class="form-label">Buscar por nome</label>
+              <input type="text" class="form-control" id="q" name="q" placeholder="Nome do arquivo">
             </div>
-            <div class="card-body">
-                <form method="get" action="/database">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label for="q" class="form-label">Buscar por nome</label>
-                            <input type="text" class="form-control" id="q" name="q" 
-                                   value="{{ filters.q or '' }}" placeholder="Nome do arquivo">
-                        </div>
-                        
-                        <div class="col-md-2">
-                            <label for="from_date" class="form-label">Data inicial</label>
-                            <input type="date" class="form-control" id="from_date" name="from_date" 
-                                   value="{{ filters.from_date or '' }}">
-                        </div>
-                        
-                        <div class="col-md-2">
-                            <label for="to_date" class="form-label">Data final</label>
-                            <input type="date" class="form-control" id="to_date" name="to_date" 
-                                   value="{{ filters.to_date or '' }}">
-                        </div>
-                        
-                        <div class="col-md-3">
-                            <label for="user_id" class="form-label">Usuário</label>
-                            <select class="form-select" id="user_id" name="user_id">
-                                <option value="">Todos os usuários</option>
-                                {% for user in users %}
-                                <option value="{{ user.id }}" 
-                                        {% if filters.user_id == user.id %}selected{% endif %}>
-                                    {{ user.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-2">
-                            <label class="form-label">&nbsp;</label>
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-search"></i> Filtrar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+
+            <div class="col-md-2">
+              <label for="from_date" class="form-label">Data inicial</label>
+              <input type="date" class="form-control" id="from_date" name="from_date">
             </div>
-        </div>
+
+            <div class="col-md-2">
+              <label for="to_date" class="form-label">Data final</label>
+              <input type="date" class="form-control" id="to_date" name="to_date">
+            </div>
+
+            <div class="col-md-3">
+              <label for="user_id" class="form-label">Usuário</label>
+              <select class="form-select" id="user_id" name="user_id">
+                <option value="">Todos os usuários</option>
+              </select>
+            </div>
+
+            <div class="col-md-2">
+              <label class="form-label">&nbsp;</label>
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-search"></i> Filtrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- Tabela de Uploads -->
 <div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-table"></i> Uploads
-                    <span class="badge bg-secondary ms-2">{{ pagination.total or 0 }} registros</span>
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if uploads %}
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="uploadsTable">
-                        <thead>
-                            <tr>
-                                <th>Arquivo</th>
-                                <th>Tamanho</th>
-                                <th>Data Upload</th>
-                                <th>Usuário</th>
-                                <th>Linhas</th>
-                                <th>Colunas</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for upload in uploads %}
-                            <tr>
-                                <td>
-                                    <i class="bi bi-file-earmark-spreadsheet text-primary"></i>
-                                    {{ upload.original_name }}
-                                </td>
-                                <td>
-                                    {% if upload.size_bytes %}
-                                        {% set size_mb = upload.size_bytes / (1024 * 1024) %}
-                                        {% if size_mb < 1 %}
-                                            {{ (upload.size_bytes / 1024)|round(1) }} KB
-                                        {% else %}
-                                            {{ size_mb|round(1) }} MB
-                                        {% endif %}
-                                    {% else %}
-                                        -
-                                    {% endif %}
-                                </td>
-                                <td>{{ upload.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                                <td>
-                                    {{ upload.user.name }}
-                                    {% if upload.user.role == 'operator' %}
-                                    <span class="badge bg-warning text-dark ms-1">Operador</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ upload.rows_total or '-' }}</td>
-                                <td>{{ upload.cols_total or '-' }}</td>
-                                <td>
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <a href="/database/{{ upload.id }}" 
-                                           class="btn btn-outline-primary" 
-                                           title="Ver detalhes">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <a href="/database/{{ upload.id }}/download" 
-                                           class="btn btn-outline-success" 
-                                           title="Baixar arquivo">
-                                            <i class="bi bi-download"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Paginação -->
-                {% if pagination.total_pages > 1 %}
-                <nav aria-label="Paginação">
-                    <ul class="pagination justify-content-center">
-                        {% if pagination.has_prev %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ pagination.page - 1 }}{% if filters.q %}&q={{ filters.q }}{% endif %}{% if filters.from_date %}&from_date={{ filters.from_date }}{% endif %}{% if filters.to_date %}&to_date={{ filters.to_date }}{% endif %}{% if filters.user_id %}&user_id={{ filters.user_id }}{% endif %}">
-                                Anterior
-                            </a>
-                        </li>
-                        {% endif %}
-                        
-                        {% for page_num in range(1, pagination.total_pages + 1) %}
-                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-                            <a class="page-link" href="?page={{ page_num }}{% if filters.q %}&q={{ filters.q }}{% endif %}{% if filters.from_date %}&from_date={{ filters.from_date }}{% endif %}{% if filters.to_date %}&to_date={{ filters.to_date }}{% endif %}{% if filters.user_id %}&user_id={{ filters.user_id }}{% endif %}">
-                                {{ page_num }}
-                            </a>
-                        </li>
-                        {% endfor %}
-                        
-                        {% if pagination.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ pagination.page + 1 }}{% if filters.q %}&q={{ filters.q }}{% endif %}{% if filters.from_date %}&from_date={{ filters.from_date }}{% endif %}{% if filters.to_date %}&to_date={{ filters.to_date }}{% endif %}{% if filters.user_id %}&user_id={{ filters.user_id }}{% endif %}">
-                                Próximo
-                            </a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-                {% endif %}
-                
-                {% else %}
-                <div class="text-center py-5">
-                    <i class="bi bi-inbox display-1 text-muted"></i>
-                    <h4 class="text-muted mt-3">Nenhum upload encontrado</h4>
-                    <p class="text-muted">Faça upload de arquivos CSV para vê-los aqui.</p>
-                    <a href="/dashboard" class="btn btn-primary">
-                        <i class="bi bi-cloud-upload"></i> Fazer Upload
-                    </a>
-                </div>
-                {% endif %}
-            </div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+          <i class="bi bi-table"></i> Uploads
+        </h5>
+        <span class="badge bg-secondary" id="total-count">0 registros</span>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover" id="uploadsTable">
+            <thead>
+              <tr>
+                <th>Arquivo</th>
+                <th>Tamanho</th>
+                <th>Data Upload</th>
+                <th>Usuário</th>
+                <th>Linhas</th>
+                <th>Colunas</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="uploads-body">
+              <!-- Conteúdo será preenchido via JS -->
+            </tbody>
+          </table>
         </div>
+        <!-- Paginação futura aqui -->
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-$(document).ready(function() {
-    $('#uploadsTable').DataTable({
-        "language": {
-            "url": "https://cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json"
-        },
-        "pageLength": 25,
-        "order": [[ 2, "desc" ]], // Ordenar por data de upload
-        "columnDefs": [
-            { "orderable": false, "targets": 6 } // Desabilitar ordenação na coluna de ações
-        ]
+document.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    alert("Você precisa estar logado.");
+    window.location.href = "/login";
+    return;
+  }
+
+  const uploadsTableBody = document.getElementById('uploads-body');
+  const totalCountEl = document.getElementById('total-count');
+  const userSelect = document.getElementById('user_id');
+  const filterForm = document.getElementById('filter-form');
+
+  // Carrega os uploads com os filtros atuais
+  function fetchUploads(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    fetch(`/api/v1/manage-file/database?${query}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("Erro ao buscar uploads.");
+      return res.json();
+    })
+    .then(data => {
+      uploadsTableBody.innerHTML = '';
+      totalCountEl.textContent = `${data.pagination.total} registros`;
+
+      data.uploads.forEach(upload => {
+        const sizeMB = upload.size_bytes ? (upload.size_bytes / 1024 / 1024).toFixed(1) : '-';
+        const sizeDisplay = upload.size_bytes < 1024 * 1024
+          ? `${(upload.size_bytes / 1024).toFixed(1)} KB`
+          : `${sizeMB} MB`;
+
+        const userBadge = upload.user.role === 'operator'
+          ? `<span class="badge bg-warning text-dark ms-1">Operador</span>`
+          : '';
+
+        const row = `
+          <tr>
+            <td><i class="bi bi-file-earmark-spreadsheet text-primary"></i> ${upload.original_name}</td>
+            <td>${upload.size_bytes ? sizeDisplay : '-'}</td>
+            <td>${new Date(upload.uploaded_at).toLocaleString('pt-BR')}</td>
+            <td>${upload.user.name} ${userBadge}</td>
+            <td>${upload.rows_total ?? '-'}</td>
+            <td>${upload.cols_total ?? '-'}</td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <a href="/database/${upload.id}" class="btn btn-outline-primary" title="Ver detalhes">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="/database/${upload.id}/download" class="btn btn-outline-success" title="Baixar">
+                  <i class="bi bi-download"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+        `;
+        uploadsTableBody.insertAdjacentHTML('beforeend', row);
+      });
+    })
+    .catch(error => {
+      console.error(error);
+      alert("Erro ao carregar os uploads.");
     });
+  }
+
+  // Preenche dropdown de usuários (opcional, se tiver endpoint)
+  function fetchUsers() {
+    fetch('/api/v1/user/users', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(res => res.json())
+    .then(users => {
+      users.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.id;
+        option.textContent = user.name;
+        userSelect.appendChild(option);
+      });
+    })
+    .catch(() => {
+      console.warn("Não foi possível carregar usuários (dropdown)");
+    });
+  }
+
+  // Submete os filtros
+  filterForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const params = {
+      q: this.q.value,
+      from_date: this.from_date.value,
+      to_date: this.to_date.value,
+      user_id: this.user_id.value
+    };
+    fetchUploads(params);
+  });
+
+  // Inicialização
+  fetchUsers(); // se aplicável
+  fetchUploads(); // primeira carga
 });
 </script>
 {% endblock %}

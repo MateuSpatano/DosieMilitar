@@ -25,3 +25,7 @@ async def account_page(request: Request):
 @router.get("/account/change-password", response_class=HTMLResponse)
 async def account_page(request: Request):
     return templates.TemplateResponse("account/change_password.html", {"request": request})
+
+@router.get("/database", response_class=HTMLResponse)
+async def account_page(request: Request):
+    return templates.TemplateResponse("database/list.html", {"request": request})

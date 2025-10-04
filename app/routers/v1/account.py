@@ -3,14 +3,11 @@
 
 from app.dependencies.validation import validate_account_deletion, validate_password_change_factory
 from fastapi import APIRouter, Request, Depends, status, Body
-from fastapi.responses import RedirectResponse, HTMLResponse
-from fastapi.templating import Jinja2Templates
 import logging
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
 
 @router.post("/change-password")
 async def change_password(

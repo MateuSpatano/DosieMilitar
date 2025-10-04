@@ -5,7 +5,7 @@ from app.dependencies.auth import require_auth
 from app.dependencies.upload import get_download_file, get_upload_details, get_upload_service, validate_csv_upload
 from app.services.upload_service import UploadService
 from fastapi import APIRouter, Request, Depends, HTTPException, status, Query, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc
@@ -23,9 +23,8 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
-@router.get("/database", response_class=HTMLResponse)
+@router.get("/database")
 async def database_list(
-    request: Request,
     current_user: dict = Depends(require_auth),
     upload_service: UploadService = Depends(get_upload_service),
     q: str = Query(None, description="Buscar por nome do arquivo"),
@@ -35,8 +34,14 @@ async def database_list(
     page: int = Query(1, ge=1, description="Página"),
     page_size: int = Query(10, ge=1, le=100, description="Itens por página")
 ):
-    """Lista de uploads com filtros."""
+    """
+    Retorna a lista de uploads em formato JSON.
+    """
     try:
+        # Se o usuário não for operador ou admin, só pode ver seus próprios uploads
+        if current_user["user_role"] not in ("admin", "operator"):
+            user_id = current_user["user_id"]
+
         data = upload_service.get_filtered_uploads(
             q=q,
             from_date=from_date,
@@ -45,20 +50,9 @@ async def database_list(
             page=page,
             page_size=page_size
         )
-        
-        users = upload_service.get_all_users()
 
-        return templates.TemplateResponse("database/list.html", {
-            "request": request,
-            "user": current_user,
-            "uploads": data["uploads"],
-            "users": users,
-            "filters": {
-                "q": q,
-                "from_date": from_date,
-                "to_date": to_date,
-                "user_id": user_id
-            },
+        return {
+            "uploads": data["uploads"],  # certifique-se que isso seja serializável
             "pagination": {
                 "page": data["page"],
                 "page_size": data["page_size"],
@@ -66,17 +60,20 @@ async def database_list(
                 "total_pages": data["total_pages"],
                 "has_prev": data["page"] > 1,
                 "has_next": data["page"] < data["total_pages"]
+            },
+            "user": {
+                "id": current_user["user_id"],
+                "name": current_user["user_name"],
+                "role": current_user["user_role"]
             }
-        })
+        }
+
     except Exception as e:
         logger.error(f"Erro ao listar uploads: {e}")
-        return templates.TemplateResponse("database/list.html", {
-            "request": request,
-            "user": current_user,
-            "error": "Erro ao carregar lista de uploads",
-            "uploads": [],
-            "users": []
-        })
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Erro ao carregar lista de uploads"}
+        )
 
 
 @router.get("/database/{upload_id}", response_class=HTMLResponse)

@@ -54,8 +54,6 @@ class UploadService:
             "total_pages": total_pages
         }
 
-    def get_all_users(self):
-        return self.db.query(User).all()
     
     def process_and_save_upload(self, user_id: int, file: UploadFile):
         # Salva o arquivo fisicamente

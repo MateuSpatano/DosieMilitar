@@ -84,6 +84,9 @@ class AuthService:
         """Obter usuário por ID"""
         return self.db.query(User).filter(User.id == user_id).first()
     
+    def get_all_users(self):
+        return self.db.query(User).all()
+    
     def get_operator(self) -> User | None:
         """Obter operador do sistema"""
         return self.db.query(User).filter(User.role == UserRole.OPERATOR).first()
