@@ -21,3 +21,7 @@ async def dashboard_page(request: Request):
 @router.get("/account", response_class=HTMLResponse)
 async def account_page(request: Request):
     return templates.TemplateResponse("account/profile.html", {"request": request})
+
+@router.get("/account/change-password", response_class=HTMLResponse)
+async def account_page(request: Request):
+    return templates.TemplateResponse("account/change_password.html", {"request": request})

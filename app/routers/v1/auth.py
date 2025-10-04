@@ -1,7 +1,6 @@
 # app/routers/auth.py
 
 from app.dependencies.auth import get_auth_service
-from app.dependencies.validation import validate_password_length, validate_passwords_match
 from fastapi import APIRouter, Request, Form, Depends, HTTPException, Body
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from typing import Annotated
