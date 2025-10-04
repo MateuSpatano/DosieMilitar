@@ -30,7 +30,7 @@ async def database_list(
     q: str = Query(None, description="Buscar por nome do arquivo"),
     from_date: str = Query(None, description="Data inicial (YYYY-MM-DD)"),
     to_date: str = Query(None, description="Data final (YYYY-MM-DD)"),
-    user_id: int = Query(None, description="ID do usuário"),
+    user_id: str = Query(None, description="ID do usuário"),
     page: int = Query(1, ge=1, description="Página"),
     page_size: int = Query(10, ge=1, le=100, description="Itens por página")
 ):
@@ -76,21 +76,33 @@ async def database_list(
         )
 
 
-@router.get("/database/{upload_id}", response_class=HTMLResponse)
-async def database_detail(
-    request: Request,
+@router.get("/database/{upload_id}")
+async def api_database_detail(
+    upload_id: int,
     current_user: dict = Depends(require_auth),
-    data: dict = Depends(get_upload_details) # A dependência faz todo o trabalho!
+    data: dict = Depends(get_upload_details)
 ):
-    """Detalhes do upload."""
-    return templates.TemplateResponse("database/detail.html", {
-        "request": request,
-        "user": current_user,
-        "upload": data["upload"],
+    """Retorna os detalhes do upload como JSON."""
+    upload = data["upload"]
+
+    return {
+        "upload": {
+            "id": upload.id,
+            "original_name": upload.original_name,
+            "uploaded_at": upload.uploaded_at.isoformat(),
+            "size_bytes": upload.size_bytes,
+            "rows_total": upload.rows_total,
+            "cols_total": upload.cols_total,
+            "user": {
+                "id": upload.user.id,
+                "name": upload.user.name,
+                "role": upload.user.role
+            }
+        },
         "columns": data["columns"],
         "dtypes": data["dtypes"],
         "sample_rows": data["sample_rows"]
-    })
+    }
 
 
 @router.get("/database/{upload_id}/download")
@@ -106,34 +118,30 @@ async def download_upload(
         media_type='text/csv'
     )
 
-@router.post("/upload-csv")
+@router.post("/upload-csv", response_class=JSONResponse)
 async def upload_csv(
-    request: Request,
     file: UploadFile = Depends(validate_csv_upload),
     current_user: dict = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
-    """Upload de arquivo CSV."""
+    """Upload de arquivo CSV via JWT + Fetch (JSON)."""
     try:
         upload_service = UploadService(db)
-        upload = upload_service.process_and_save_upload(current_user["id"], file)
-        
-        request.session.pop("csrf_token", None)
-        
-        return RedirectResponse(
-            url="/dashboard?success=Arquivo enviado com sucesso",
-            status_code=302
+        upload = upload_service.process_and_save_upload(current_user["user_id"], file)
+
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"message": "Arquivo enviado com sucesso!", "upload_id": upload.id}
         )
-        
+
     except HTTPException as e:
-        # Erro de CSRF ou validação do arquivo
-        return RedirectResponse(
-            url=f"/dashboard?error={e.detail}",
-            status_code=302
+        return JSONResponse(
+            status_code=e.status_code,
+            content={"message": e.detail}
         )
     except Exception as e:
         logger.error(f"Erro no upload: {e}")
-        return RedirectResponse(
-            url="/dashboard?error=Erro interno do servidor",
-            status_code=302
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": "Erro interno do servidor"}
         )

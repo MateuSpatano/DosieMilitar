@@ -132,17 +132,17 @@
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0"><i class="bi bi-cloud-upload"></i> Upload de CSV</h5></div>
             <div class="card-body">
-                <form method="post" action="/upload-csv" enctype="multipart/form-data">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    <div class="mb-3">
-                        <label for="file" class="form-label">Selecionar Arquivo CSV</label>
-                        <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
-                        <div class="form-text">Apenas arquivos .csv são permitidos. Máximo: 500MB</div>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Enviar Arquivo</button>
-                    </div>
-                </form>
+                <div class="mb-3">
+                    <label for="csvFile" class="form-label">Selecionar Arquivo CSV</label>
+                    <input type="file" class="form-control" id="csvFile" accept=".csv" required>
+                    <div class="form-text">Apenas arquivos .csv são permitidos. Máximo: 500MB</div>
+                </div>
+                <div class="d-grid">
+                    <button id="uploadCsvBtn" class="btn btn-primary">
+                        <i class="bi bi-upload"></i> Enviar Arquivo
+                    </button>
+                </div>
+                <div id="uploadStatus" class="mt-2 text-muted small"></div>
             </div>
         </div>
     </div>
@@ -160,7 +160,7 @@
                     <div class="col-md-3"><strong>Colunas:</strong><br><span id="detailFileCols"></span></div>
                 </div>
                 <div class="mt-3">
-                    <a href="#" id="detailFileLink" class="btn btn-outline-primary btn-sm">
+                    <a href="#" id="detailFileLink" target="_self" class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-eye"></i> Ver Detalhes
                     </a>
                 </div>
@@ -168,8 +168,9 @@
         </div>
     </div>
 </div>
-{% endblock %}
+
 <script>
+const token = localStorage.getItem('access_token');
 // Cores padrão para os gráficos
 const chartColors = [
     '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
@@ -223,7 +224,12 @@ function createChart(canvasId, type, labels, data, backgroundColors, legendDispl
  */
 async function loadDashboardData() {
     try {
-        const response = await fetch('/api/v1/dashboard');
+        const response = await fetch(`/api/v1/dashboard`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
         if (!response.ok) {
             throw new Error(`Erro HTTP: ${response.status}`);
         }
@@ -244,7 +250,7 @@ async function loadDashboardData() {
             document.getElementById('lastUploadDateValue').innerText = uploadDate.toLocaleDateString('pt-BR');
             
             // Formatando nome do arquivo para o card (limitando a 20 caracteres)
-            const fileName = lastUpload.original_name;
+            const fileName = lastUpload.filename;
             document.getElementById('lastFileNameValue').innerText = 
                 fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName;
 
@@ -339,6 +345,59 @@ async function loadDashboardData() {
     }
 }
 
-// Inicia o carregamento dos dados quando o script for executado
-loadDashboardData();
+document.getElementById('detailFileLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    const url = e.currentTarget.href;
+    window.location.href = url;
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('uploadCsvBtn').addEventListener('click', async () => {
+        const fileInput = document.getElementById('csvFile');
+        const statusText = document.getElementById('uploadStatus');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            statusText.innerText = 'Por favor, selecione um arquivo CSV.';
+            return;
+        }
+
+        if (!file.name.endsWith('.csv')) {
+            statusText.innerText = 'O arquivo deve ser .csv.';
+            return;
+        }
+
+        statusText.innerText = 'Enviando...';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+
+        try {
+            const response = await fetch('/api/v1/manage-file/upload-csv', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                statusText.innerText = 'Upload realizado com sucesso.';
+                loadDashboardData(); // Atualiza os dados do dashboard
+            } else {
+                statusText.innerText = `Erro: ${result.message || 'Não foi possível enviar o arquivo.'}`;
+            }
+        } catch (error) {
+            console.error('Erro ao enviar o arquivo:', error);
+            statusText.innerText = 'Erro inesperado. Verifique o console.';
+        }
+    });
+
+    // Carrega os dados do dashboard ao carregar a página
+    loadDashboardData();
+});
 </script>
+{% endblock %}

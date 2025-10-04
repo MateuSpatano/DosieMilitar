@@ -3,20 +3,24 @@
 from datetime import datetime
 from app.services.csv_service import CSVService
 from app.services.file_service import FileService
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc
 from app.models import Upload, User
 import json
 from fastapi import UploadFile
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 class UploadService:
     def __init__(self, db: Session):
         self.db = db
         self.file_service = FileService()
         self.csv_service = CSVService()
 
-    def get_filtered_uploads(self, q: str = None, from_date: str = None, to_date: str = None, user_id: int = None, page: int = 1, page_size: int = 10):
-        query = self.db.query(Upload).join(User)
+    def get_filtered_uploads(self, q: str = None, from_date: str = None, to_date: str = None, user_id: str = None, page: int = 1, page_size: int = 10):
+        query = self.db.query(Upload).options(joinedload(Upload.user)).join(User)
 
         if q:
             query = query.filter(Upload.original_name.ilike(f"%{q}%"))
@@ -43,7 +47,6 @@ class UploadService:
         query = query.order_by(desc(Upload.uploaded_at))
         offset = (page - 1) * page_size
         uploads = query.offset(offset).limit(page_size).all()
-        
         total_pages = (total + page_size - 1) // page_size
         
         return {
@@ -82,3 +85,6 @@ class UploadService:
         self.db.refresh(upload)
         
         return upload
+
+    def get_upload_by_id(self, upload_id: int) -> Upload | None:
+        return self.db.query(Upload).filter(Upload.id == upload_id).first()

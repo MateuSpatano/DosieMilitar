@@ -92,7 +92,7 @@ async def root(request: Request):
     return templates.TemplateResponse("base.html", context) 
 
 
-@app.get("/api/health")
+@app.get("/api/v1/health")
 async def health_check():
     """Health check endpoint"""
     return {"status": "ok", "message": "Sistema funcionando"}

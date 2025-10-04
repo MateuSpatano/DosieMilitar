@@ -29,3 +29,7 @@ async def account_page(request: Request):
 @router.get("/database", response_class=HTMLResponse)
 async def account_page(request: Request):
     return templates.TemplateResponse("database/list.html", {"request": request})
+
+@router.get("/database/{upload_id}", response_class=HTMLResponse)
+async def account_page(request: Request, upload_id: int):
+    return templates.TemplateResponse("database/detail.html", {"request": request, "upload_id": upload_id})

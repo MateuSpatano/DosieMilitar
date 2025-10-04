@@ -5,182 +5,228 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h2 mb-0">
-                <i class="bi bi-file-earmark-spreadsheet"></i> Detalhes do Upload
-            </h1>
-            <div>
-                <a href="/database" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Voltar
-                </a>
-                <a href="/database/{{ upload.id }}/download" class="btn btn-success">
-                    <i class="bi bi-download"></i> Baixar Arquivo
-                </a>
+        <h1 class="h2 mb-4"><i class="bi bi-file-earmark-spreadsheet"></i> Detalhes do Upload</h1>
+        <div>
+            <a href="/database" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+            <button id="download-button" class="btn btn-success">
+                <i class="bi bi-download"></i> Baixar Arquivo
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-info-circle"></i> Informações do Arquivo</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td><strong>Nome do arquivo:</strong></td>
+                        <td id="file-name">Carregando...</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Data do upload:</strong></td>
+                        <td id="upload-date">Carregando...</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Usuário:</strong></td>
+                        <td id="user-name">Carregando...</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tamanho:</strong></td>
+                        <td id="file-size">Carregando...</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total de linhas:</strong></td>
+                        <td id="rows-total">Carregando...</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total de colunas:</strong></td>
+                        <td id="cols-total">Carregando...</td>
+                    </tr>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Informações do Arquivo -->
-<div class="row mb-4">
+<!-- Colunas -->
+<div class="row mt-4" id="columns-section" style="display: none;">
     <div class="col-12">
         <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-info-circle"></i> Informações do Arquivo
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td><strong>Nome do arquivo:</strong></td>
-                                <td>{{ upload.original_name }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Data do upload:</strong></td>
-                                <td>{{ upload.uploaded_at.strftime('%d/%m/%Y %H:%M:%S') }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Usuário:</strong></td>
-                                <td>
-                                    {{ upload.user.name }}
-                                    {% if upload.user.role == 'operator' %}
-                                    <span class="badge bg-warning text-dark ms-1">Operador</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td><strong>Tamanho:</strong></td>
-                                <td>
-                                    {% if upload.size_bytes %}
-                                        {% set size_mb = upload.size_bytes / (1024 * 1024) %}
-                                        {% if size_mb < 1 %}
-                                            {{ (upload.size_bytes / 1024)|round(1) }} KB
-                                        {% else %}
-                                            {{ size_mb|round(1) }} MB
-                                        {% endif %}
-                                    {% else %}
-                                        -
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Total de linhas:</strong></td>
-                                <td>{{ upload.rows_total or 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Total de colunas:</strong></td>
-                                <td>{{ upload.cols_total or 'N/A' }}</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
+            <div class="card-header"><h5 class="card-title mb-0">Colunas e Tipos de Dados</h5></div>
+            <div class="card-body" id="columns-container">
+                <!-- Colunas virão aqui -->
             </div>
         </div>
     </div>
 </div>
 
-<!-- Informações das Colunas -->
-{% if columns %}
-<div class="row mb-4">
+<!-- Preview -->
+<div class="row mt-4" id="preview-section" style="display: none;">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-list-columns"></i> Colunas e Tipos de Dados
-                </h5>
+                <h5 class="card-title mb-0">Preview dos Dados</h5>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    {% for col in columns %}
-                    <div class="col-md-3 mb-2">
-                        <div class="card border">
-                            <div class="card-body py-2">
-                                <h6 class="card-title mb-1">{{ col }}</h6>
-                                <span class="badge bg-{% if dtypes.get(col) == 'int' %}primary{% elif dtypes.get(col) == 'float' %}info{% elif dtypes.get(col) == 'bool' %}success{% elif dtypes.get(col) == 'datetime' %}warning{% else %}secondary{% endif %}">
-                                    {{ dtypes.get(col, 'string') }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
+            <div class="card-body table-responsive">
+                <table class="table table-striped table-hover table-sm">
+                    <thead id="preview-header"></thead>
+                    <tbody id="preview-body"></tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
-{% endif %}
 
-<!-- Preview dos Dados -->
-{% if sample_rows %}
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-table"></i> Preview dos Dados
-                    <small class="text-muted">(Primeiras {{ sample_rows|length }} linhas)</small>
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover table-sm">
-                        <thead class="table-dark">
-                            <tr>
-                                {% for col in columns %}
-                                <th>{{ col }}</th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in sample_rows %}
-                            <tr>
-                                {% for col in columns %}
-                                <td>
-                                    {% if row.get(col) is none %}
-                                        <span class="text-muted">-</span>
-                                    {% else %}
-                                        {{ row.get(col) }}
-                                    {% endif %}
-                                </td>
-                                {% endfor %}
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                
-                {% if upload.rows_total and sample_rows|length < upload.rows_total %}
-                <div class="alert alert-info mt-3">
-                    <i class="bi bi-info-circle"></i>
-                    Mostrando apenas as primeiras {{ sample_rows|length }} linhas de {{ upload.rows_total }} total.
-                    <a href="/database/{{ upload.id }}/download" class="alert-link">Baixe o arquivo completo</a> para ver todos os dados.
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-{% else %}
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body text-center py-5">
-                <i class="bi bi-exclamation-triangle display-1 text-warning"></i>
-                <h4 class="text-muted mt-3">Preview não disponível</h4>
-                <p class="text-muted">Não foi possível gerar o preview dos dados para este arquivo.</p>
-                <a href="/database/{{ upload.id }}/download" class="btn btn-primary">
-                    <i class="bi bi-download"></i> Baixar Arquivo Original
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
+<!-- JS para consumir a API -->
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    const uploadId = window.location.pathname.split("/").pop();
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+        alert("Usuário não autenticado.");
+        window.location.href = "/login";
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/v1/manage-file/database/${uploadId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!res.ok) {
+            throw new Error("Erro ao buscar dados");
+        }
+
+        const data = await res.json();
+        const upload = data.upload;
+
+        document.getElementById("file-name").innerText = upload.original_name;
+        document.getElementById("upload-date").innerText = new Date(upload.uploaded_at).toLocaleString("pt-BR");
+        document.getElementById("user-name").innerText = upload.user.name + (upload.user.role === "operator" ? " (Operador)" : "");
+        document.getElementById("file-size").innerText = formatSize(upload.size_bytes);
+        document.getElementById("rows-total").innerText = upload.rows_total ?? "N/A";
+        document.getElementById("cols-total").innerText = upload.cols_total ?? "N/A";
+
+        // Colunas
+        if (data.columns && data.columns.length > 0) {
+            const container = document.getElementById("columns-container");
+            container.innerHTML = "";
+            data.columns.forEach(col => {
+                const dtype = data.dtypes[col] || "string";
+                const badgeClass = getDtypeBadgeClass(dtype);
+                const el = `<div class="col-md-3 mb-2">
+                                <div class="card border">
+                                    <div class="card-body py-2">
+                                        <h6 class="card-title mb-1">${col}</h6>
+                                        <span class="badge bg-${badgeClass}">${dtype}</span>
+                                    </div>
+                                </div>
+                            </div>`;
+                container.innerHTML += el;
+            });
+            document.getElementById("columns-section").style.display = "block";
+        }
+
+        // Preview
+        if (data.sample_rows && data.sample_rows.length > 0) {
+            const header = document.getElementById("preview-header");
+            const body = document.getElementById("preview-body");
+            const columns = data.columns;
+
+            // Cabeçalho
+            header.innerHTML = "<tr>" + columns.map(c => `<th>${c}</th>`).join("") + "</tr>";
+
+            // Corpo
+            body.innerHTML = "";
+            data.sample_rows.forEach(row => {
+                const rowHtml = "<tr>" + columns.map(c => `<td>${row[c] ?? "-"}</td>`).join("") + "</tr>";
+                body.innerHTML += rowHtml;
+            });
+
+            document.getElementById("preview-section").style.display = "block";
+        }
+
+    } catch (err) {
+        console.error(err);
+        alert("Erro ao carregar os dados.");
+    }
+
+    function formatSize(bytes) {
+        const kb = bytes / 1024;
+        const mb = kb / 1024;
+        return mb >= 1 ? `${mb.toFixed(1)} MB` : `${kb.toFixed(1)} KB`;
+    }
+
+    function getDtypeBadgeClass(dtype) {
+        switch (dtype) {
+            case "int": return "primary";
+            case "float": return "info";
+            case "bool": return "success";
+            case "datetime": return "warning";
+            default: return "secondary";
+        }
+    }
+
+    document.getElementById("download-button").addEventListener("click", async () => {
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            alert("Usuário não autenticado.");
+            return;
+        }
+
+        const uploadId = window.location.pathname.split("/").pop();
+
+        try {
+            const response = await fetch(`/api/v1/manage-file/database/${uploadId}/download`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Erro ao baixar o arquivo.");
+            }
+
+            const blob = await response.blob();
+            const contentDisposition = response.headers.get("Content-Disposition");
+            let filename = "arquivo.csv";
+
+            // Tenta extrair o nome real do arquivo do header
+            if (contentDisposition && contentDisposition.includes("filename=")) {
+                const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (match) {
+                    filename = match[1];
+                }
+            }
+
+            // Cria link temporário para baixar
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
+        } catch (err) {
+            console.error(err);
+            alert("Falha ao baixar o arquivo.");
+        }
+    });
+
+});
+</script>
 {% endblock %}

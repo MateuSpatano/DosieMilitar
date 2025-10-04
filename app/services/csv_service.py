@@ -24,69 +24,63 @@ class CSVService:
         """Detectar encoding do arquivo"""
         try:
             with open(file_path, 'rb') as f:
-                raw_data = f.read(10000)  # Ler primeiros 10KB
+                raw_data = f.read(10000)
                 result = chardet.detect(raw_data)
                 if result['confidence'] > 0.7:
                     return result['encoding']
         except Exception as e:
             logger.warning(f"Erro ao detectar encoding: {e}")
         
-        # Fallback para encodings comuns
+        # Fallback
         for encoding in self.encodings:
             try:
                 with open(file_path, 'r', encoding=encoding) as f:
-                    f.read(1000)  # Testar leitura
+                    f.read(1000)
                 return encoding
             except (UnicodeDecodeError, UnicodeError):
                 continue
         
-        return 'utf-8'  # Fallback final
+        return 'utf-8'
     
     def detect_separator(self, file_path: Path, encoding: str) -> str:
         """Detectar separador do CSV"""
         for sep in self.separators:
             try:
-                df = pd.read_csv(file_path, sep=sep, encoding=encoding, nrows=5)
+                df = pd.read_csv(file_path, sep=sep, encoding=encoding, nrows=5, on_bad_lines='skip')
                 if len(df.columns) > 1:
                     return sep
             except Exception:
                 continue
         
-        return ','  # Fallback para vírgula
-    
+        return ','
+
     def get_file_info(self, file_path: Path) -> Dict[str, Any]:
         """
         Obter informações do arquivo CSV
-        
+
         Returns:
             Dict com: rows_total, cols_total, columns, dtypes, sample_rows
         """
         try:
-            # Detectar encoding e separador
             encoding = self.detect_encoding(file_path)
             separator = self.detect_separator(file_path, encoding)
             
-            # Ler amostra para análise
+            # Leitura da amostra
             df_sample = pd.read_csv(
                 file_path,
                 sep=separator,
                 encoding=encoding,
-                nrows=self.sample_size
+                nrows=self.sample_size,
+                on_bad_lines='skip'
             )
             
-            # Contar linhas totais (aproximado)
             rows_total = self._count_total_rows(file_path, separator, encoding)
-            
-            # Informações básicas
+
             cols_total = len(df_sample.columns)
             columns = df_sample.columns.tolist()
-            
-            # Detectar tipos de dados
             dtypes = self._detect_dtypes(df_sample)
-            
-            # Amostra de linhas para preview
             sample_rows = self._get_sample_rows(df_sample)
-            
+
             return {
                 'rows_total': rows_total,
                 'cols_total': cols_total,
@@ -94,7 +88,7 @@ class CSVService:
                 'dtypes': dtypes,
                 'sample_rows': sample_rows
             }
-            
+
         except Exception as e:
             logger.error(f"Erro ao processar CSV {file_path}: {e}")
             return {
@@ -104,35 +98,30 @@ class CSVService:
                 'dtypes': {},
                 'sample_rows': []
             }
-    
+
     def _count_total_rows(self, file_path: Path, separator: str, encoding: str) -> int:
         """Contar total de linhas do arquivo"""
         try:
-            # Para arquivos pequenos, contar diretamente
             if file_path.stat().st_size < 10 * 1024 * 1024:  # < 10MB
-                df = pd.read_csv(file_path, sep=separator, encoding=encoding)
+                df = pd.read_csv(file_path, sep=separator, encoding=encoding, on_bad_lines='skip')
                 return len(df)
-            
-            # Para arquivos grandes, contar por chunks
+
             total_rows = 0
             chunk_size = 10000
-            
-            for chunk in pd.read_csv(file_path, sep=separator, encoding=encoding, chunksize=chunk_size):
+            for chunk in pd.read_csv(file_path, sep=separator, encoding=encoding, chunksize=chunk_size, on_bad_lines='skip'):
                 total_rows += len(chunk)
-            
+
             return total_rows
-            
+
         except Exception as e:
             logger.warning(f"Erro ao contar linhas: {e}")
             return 0
-    
+
     def _detect_dtypes(self, df: pd.DataFrame) -> Dict[str, str]:
         """Detectar tipos de dados simplificados"""
         dtype_map = {}
-        
         for col in df.columns:
             dtype = str(df[col].dtype)
-            
             if 'int' in dtype:
                 dtype_map[col] = 'int'
             elif 'float' in dtype:
@@ -143,40 +132,34 @@ class CSVService:
                 dtype_map[col] = 'datetime'
             else:
                 dtype_map[col] = 'string'
-        
         return dtype_map
-    
+
     def _get_sample_rows(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
         """Obter amostra de linhas para preview"""
-        # Pegar primeiras linhas (máximo max_sample_rows)
         sample_df = df.head(self.max_sample_rows)
-        
-        # Converter para dict, tratando valores NaN
         sample_rows = []
         for _, row in sample_df.iterrows():
             row_dict = {}
             for col, value in row.items():
                 if pd.isna(value):
                     row_dict[col] = None
-                elif isinstance(value, (int, float)) and pd.isna(value):
-                    row_dict[col] = None
                 else:
                     row_dict[col] = str(value)
             sample_rows.append(row_dict)
-        
         return sample_rows
-    
+
     def load_csv_preview(self, file_path: Path, max_rows: int = 100) -> pd.DataFrame:
-        """Carregar preview do CSV"""
+        """Carregar preview do CSV com robustez contra erros de formatação"""
         try:
             encoding = self.detect_encoding(file_path)
             separator = self.detect_separator(file_path, encoding)
-            
+
             return pd.read_csv(
                 file_path,
                 sep=separator,
                 encoding=encoding,
-                nrows=max_rows
+                nrows=max_rows,
+                on_bad_lines='skip'  # <- LINHAS MAL FORMADAS SÃO IGNORADAS
             )
         except Exception as e:
             logger.error(f"Erro ao carregar preview: {e}")

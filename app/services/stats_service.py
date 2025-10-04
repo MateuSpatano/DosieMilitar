@@ -16,6 +16,16 @@ class StatsService:
     
     def __init__(self, db: Session):
         self.db = db
+
+    def serialize_upload(self, upload: Upload) -> dict:
+        return {
+            "id": upload.id,
+            "filename": upload.original_name,
+            "uploaded_at": upload.uploaded_at.isoformat() if upload.uploaded_at else None,
+            "rows_total": upload.rows_total,
+            "cols_total": upload.cols_total
+            # Adicione os outros campos relevantes do modelo aqui
+        }
     
     def get_dashboard_stats(self) -> Dict[str, Any]:
         """Obter estatísticas para o dashboard"""
@@ -25,6 +35,7 @@ class StatsService:
             
             # Último upload
             last_upload = self.db.query(Upload).order_by(desc(Upload.uploaded_at)).first()
+            serialized_last_upload = self.serialize_upload(last_upload) if last_upload else None
             
             # Total de linhas (soma de todos os uploads)
             total_rows = self.db.query(func.sum(Upload.rows_total)).scalar() or 0
@@ -34,7 +45,7 @@ class StatsService:
             
             return {
                 'total_uploads': total_uploads,
-                'last_upload': last_upload,
+                'last_upload': serialized_last_upload,
                 'total_rows': total_rows,
                 'dtype_distribution': dtype_distribution
             }
@@ -124,7 +135,7 @@ class StatsService:
         except Exception as e:
             logger.error(f"Erro ao obter uploads por período: {e}")
             return []
-    
+        
     def get_military_stats(self, upload_id: Optional[int] = None) -> Dict[str, Any]:
         """Obter estatísticas específicas dos dados militares"""
         try:

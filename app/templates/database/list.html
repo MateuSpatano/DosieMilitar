@@ -150,9 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <a href="/database/${upload.id}" class="btn btn-outline-primary" title="Ver detalhes">
                   <i class="bi bi-eye"></i>
                 </a>
-                <a href="/database/${upload.id}/download" class="btn btn-outline-success" title="Baixar">
+                <button class="btn btn-outline-success download-button" data-upload-id="${upload.id}" title="Baixar">
                   <i class="bi bi-download"></i>
-                </a>
+                </button>
               </div>
             </td>
           </tr>
@@ -197,6 +197,56 @@ document.addEventListener('DOMContentLoaded', () => {
       user_id: this.user_id.value
     };
     fetchUploads(params);
+  });
+
+  uploadsTableBody.addEventListener("click", async (e) => {
+    if (e.target.closest(".download-button")) {
+      const button = e.target.closest(".download-button");
+      const uploadId = button.dataset.uploadId;
+
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        alert("Usuário não autenticado.");
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/v1/manage-file/database/${uploadId}/download`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Erro ao baixar o arquivo.");
+        }
+
+        const blob = await response.blob();
+        const contentDisposition = response.headers.get("Content-Disposition");
+        let filename = "arquivo.csv";
+
+        if (contentDisposition && contentDisposition.includes("filename=")) {
+          const match = contentDisposition.match(/filename="?([^"]+)"?/);
+          if (match) {
+            filename = match[1];
+          }
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+      } catch (err) {
+        console.error(err);
+        alert("Falha ao baixar o arquivo.");
+      }
+    }
   });
 
   // Inicialização

@@ -12,7 +12,6 @@ async def get_dashboard_api(
     dashboard_data: dict = Depends(get_dashboard_data)
 ):
     return JSONResponse({
-        "user": current_user,
         "stats": dashboard_data.get("stats"),
         "military_stats": dashboard_data.get("military_stats"),
         "chart_data": dashboard_data.get("chart_data")
