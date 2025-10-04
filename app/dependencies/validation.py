@@ -48,25 +48,17 @@ def validate_password_change_factory():
     return validate_password_change
 
 def validate_account_deletion(
-    request: Request,
-    confirm_email: str = Form(...),
-    auth_service: AuthService = Depends(get_db),
+    auth_service: AuthService = Depends(get_auth_service),
     current_user: dict = Depends(require_auth),
 ) -> bool:
     """Valida e processa exclusão de conta"""
-    if current_user["role"] == "operator":
+    if current_user["user_role"] == "operator":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Operadores não podem excluir a própria conta."
         )
 
-    if confirm_email != current_user["email"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email de confirmação não confere"
-        )
-
-    success = auth_service.delete_user(current_user["id"])
+    success = auth_service.delete_user(current_user["user_id"])
     if not success:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

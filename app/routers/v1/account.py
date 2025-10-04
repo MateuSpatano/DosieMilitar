@@ -23,12 +23,6 @@ async def change_password(
     
 @router.post("/delete")
 async def delete_account(
-    request: Request,
-    _ = Depends(validate_account_deletion)
+    user=Depends(validate_account_deletion)
 ):
-    """Excluir conta."""
-    request.session.clear()
-    return RedirectResponse(
-        url="/login?success=Conta excluída com sucesso",
-        status_code=302
-    )
+    return {"message": "Conta excluída com sucesso"}

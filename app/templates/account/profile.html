@@ -59,7 +59,7 @@
                     </a>
 
                     <!-- Botão condicional -->
-                    <a href="/account/delete" class="btn btn-outline-danger" id="delete-btn" style="display: none;">
+                    <a class="btn btn-outline-danger" id="delete-btn" style="display: none;">
                         <i class="bi bi-trash"></i> Excluir Conta
                     </a>
 
@@ -162,6 +162,41 @@ document.addEventListener('DOMContentLoaded', function () {
     .catch(error => {
         console.error('Erro:', error);
         alert("Erro ao carregar os dados do perfil.");
+    });
+});
+
+document.getElementById('delete-btn').addEventListener('click', function() {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        alert("Você precisa estar logado.");
+        window.location.href = "/login";
+        return;
+    }
+
+    if (!confirm("Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita.")) {
+        return;
+    }
+
+    fetch('/api/v1/account/delete', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("Erro ao excluir conta");
+        return response.json();
+    })
+    .then(data => {
+        alert(data.message);
+        // Remove token do localStorage pra "logout"
+        localStorage.removeItem('access_token');
+        window.location.href = "/login";
+    })
+    .catch(err => {
+        alert(err.message);
     });
 });
 </script>

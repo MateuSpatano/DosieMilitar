@@ -114,15 +114,6 @@ $(document).ready(function() {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    // Confirmação para ações perigosas
-    $('.btn-danger, .btn-outline-danger').on('click', function(e) {
-        var action = $(this).text().trim();
-        if (action.includes('Excluir') || action.includes('Delete')) {
-            if (!confirm('Tem certeza que deseja realizar esta ação? Esta ação não pode ser desfeita.')) {
-                e.preventDefault();
-            }
-        }
-    });
 
     // Atualizar estatísticas em tempo real (se necessário)
     if (typeof updateStats === 'function') {
