@@ -1,6 +1,7 @@
 # app/dependencies/auth.py
 from fastapi import Request, HTTPException, status, Depends
 from fastapi.responses import RedirectResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional, Dict
 from app.services.auth_service import AuthService
 from app.dependencies.database import get_db
@@ -9,23 +10,16 @@ from sqlalchemy.orm import Session
 def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
     return AuthService(db)
 
+security = HTTPBearer()
+
 async def require_auth(
-    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
     auth_service: AuthService = Depends(get_auth_service)
 ) -> dict:
-    """Valida JWT enviado via Authorization header."""
-    auth_header = request.headers.get("Authorization")
-    if not auth_header:
-        raise HTTPException(status_code=401, detail="Token não fornecido")
-    
-    scheme, _, token = auth_header.partition(" ")
-    if scheme.lower() != "bearer" or not token:
-        raise HTTPException(status_code=401, detail="Token inválido")
-    
+    token = credentials.credentials
     user_data = auth_service.decode_access_token(token)
     if not user_data:
         raise HTTPException(status_code=401, detail="Token inválido")
-    
     return user_data
 
 async def get_user_object(

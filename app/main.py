@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.openapi.utils import get_openapi
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 import os
@@ -92,11 +93,6 @@ async def root(request: Request):
     return templates.TemplateResponse("base.html", context) 
 
 
-@app.get("/api/v1/health")
-async def health_check():
-    """Health check endpoint"""
-    return {"status": "ok", "message": "Sistema funcionando"}
-
 
 # Handler para erros 404
 @app.exception_handler(404)
@@ -119,3 +115,39 @@ async def internal_error_handler(request: Request, exc: Exception):
         "error": "Erro interno do servidor",
         "title": "500 - Erro interno"
     })
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+
+    # Define o esquema de segurança Bearer
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+        }
+    }
+
+    # Aplica segurança só nos endpoints que usam require_auth
+    for path in openapi_schema["paths"].values():
+        for operation in path.values():
+            # Aqui você pode marcar a operação que tenha "security" se quiser
+            # Ou você pode usar uma lógica simples para aplicar onde quiser
+            # Exemplo: verificar se a operação tem algum parâmetro 'Authorization'
+            # Para simplificar, aplica em todas:
+            if "security" not in operation:
+                continue
+            operation["security"] = [{"BearerAuth": []}]
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi

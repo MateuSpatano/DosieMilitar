@@ -9,3 +9,8 @@ router.include_router(account.router, prefix="/account")
 router.include_router(manage_file.router, prefix="/manage-file")
 router.include_router(dashboard.router, prefix="/dashboard")
 router.include_router(user.router, prefix="/user")
+
+@router.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "ok", "message": "Sistema funcionando"}
