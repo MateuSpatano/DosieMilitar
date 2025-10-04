@@ -12,15 +12,11 @@
                 </h4>
             </div>
             <div class="card-body">
-                {% if errorLogin %}
-                <div class="alert alert-danger" role="alert">
-                    <i class="bi bi-exclamation-triangle"></i> {{ errorLogin }}
+                <div id="errorLogin" class="alert alert-danger d-none" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> <span id="errorText"></span>
                 </div>
-                {% endif %}
-                
-                <form method="post" action="/api/v1/authentication/login">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    
+
+                <form id="loginForm" novalidate>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
                         <div class="input-group">
@@ -30,7 +26,7 @@
                             <input type="email" class="form-control" id="email" name="email" required>
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="password" class="form-label">Senha</label>
                         <div class="input-group">
@@ -40,7 +36,7 @@
                             <input type="password" class="form-control" id="password" name="password" required>
                         </div>
                     </div>
-                    
+
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-box-arrow-in-right"></i> Entrar
@@ -48,6 +44,7 @@
                     </div>
                 </form>
             </div>
+
             <div class="card-footer text-center">
                 <p class="mb-0">
                     Não tem uma conta? 
@@ -57,4 +54,75 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const token = localStorage.getItem("access_token");
+
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            return JSON.parse(atob(base64));
+        } catch(e) {
+            return null;
+        }
+    }
+
+    function isTokenValid(payload) {
+        if(!payload) return false;
+        if(payload.exp && Date.now() >= payload.exp * 1000) return false; // token expirado
+        if(!payload.name && !payload.sub) return false; // usuário ausente
+        return true;
+    }
+
+    if(token) {
+        const payload = parseJwt(token);
+        if(isTokenValid(payload)) {
+            // Usuário já logado → redireciona
+            window.location.href = "/dashboard";
+        } else {
+            // Token inválido → limpa localStorage
+            localStorage.removeItem("access_token");
+        }
+    }
+
+    const form = document.getElementById("loginForm");
+    const errorDiv = document.getElementById("errorLogin");
+    const errorText = document.getElementById("errorText");
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        errorDiv.classList.add("d-none");
+
+        const data = {
+            email: form.email.value.trim(),
+            password: form.password.value
+        };
+
+        try {
+            const res = await fetch("/api/v1/authentication/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            const json = await res.json();
+
+            if (!res.ok) {
+                errorText.textContent = json.detail || "Erro desconhecido";
+                errorDiv.classList.remove("d-none");
+            } else {
+                // Login bem-sucedido: salva token e redireciona
+                localStorage.setItem("access_token", json.access_token);
+                window.location.href = "/dashboard";
+            }
+        } catch (err) {
+            errorText.textContent = "Erro na comunicação com o servidor";
+            errorDiv.classList.remove("d-none");
+            console.error(err);
+        }
+    });
+});
+</script>
 {% endblock %}

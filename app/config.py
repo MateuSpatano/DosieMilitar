@@ -10,7 +10,9 @@ class Settings(BaseSettings):
     """Configurações da aplicação"""
     
     # Segurança
-    secret_key: str = "change_me"
+    secret_key: str
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
     
     # Banco de dados
     database_url: str = "sqlite:///./app.db"

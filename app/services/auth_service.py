@@ -1,10 +1,11 @@
 """
 Serviço de autenticação
 """
+from datetime import timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from app.models import User, UserRole
-from app.security import hash_password, verify_password
+from app.security import hash_password, verify_password, create_access_token, verify_token
 from app.config import settings
 import logging
 
@@ -16,6 +17,23 @@ class AuthService:
     
     def __init__(self, db: Session):
         self.db = db
+
+    def create_access_token(self, data: dict):
+        return create_access_token(self, data)
+    
+    def verify_token(token: str):
+        return verify_token(token)
+    
+    def decode_access_token(self, token: str) -> dict:
+        """Decodifica um token JWT e retorna os dados do usuário"""
+        try:
+            payload = verify_token(token)
+            # payload deve conter pelo menos user_id
+            if "user_id" not in payload:
+                raise ValueError("Token inválido")
+            return payload
+        except ValueError as e:
+            raise ValueError(f"Falha ao decodificar token: {e}")
     
     def create_user(self, name: str, email: str, password: str, role: UserRole = UserRole.USER) -> User:
         """Criar novo usuário"""

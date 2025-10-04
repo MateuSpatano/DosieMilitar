@@ -1,44 +1,53 @@
 # app/dependencies/auth.py
-
-from fastapi import Depends, Request, HTTPException, status
+from fastapi import Request, HTTPException, status, Depends
 from fastapi.responses import RedirectResponse
 from typing import Optional, Dict
 from app.services.auth_service import AuthService
 from app.dependencies.database import get_db
 from sqlalchemy.orm import Session
 
-def get_current_user(request: Request) -> Optional[dict]:
-    """Obter usuário atual da sessão"""
-    return request.session.get("user")
-
-def require_auth(user: dict = Depends(get_current_user)) -> dict:
-    """Verifica se o usuário está autenticado"""
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuário não autenticado"
-        )
-    return user
-
-def get_user_object(
-    db: Session = Depends(get_db),
-    session_user: dict = Depends(require_auth)
-):
-    """Obtem o usuário completo do banco"""
-    auth_service = AuthService(db)
-    user = auth_service.get_user_by_id(session_user["id"])
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado"
-        )
-    return user
-
 def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
-    """Dependency para fornecer o serviço de autenticação""" 
     return AuthService(db)
 
-def redirect_if_authenticated(user: Optional[dict] = Depends(get_current_user)):
-    """Dependência para redirecionar usuários já logados."""
-    if user:
-        return RedirectResponse(url="/dashboard", status_code=302)
+async def require_auth(
+    request: Request,
+    auth_service: AuthService = Depends(get_auth_service)
+) -> dict:
+    """Valida JWT enviado via Authorization header."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Token não fornecido")
+    
+    scheme, _, token = auth_header.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(status_code=401, detail="Token inválido")
+    
+    user_data = auth_service.decode_access_token(token)
+    if not user_data:
+        raise HTTPException(status_code=401, detail="Token inválido")
+    
+    return user_data
+
+async def get_user_object(
+    user_data: dict = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """Retorna usuário completo do banco a partir do token."""
+    auth_service = AuthService(db)
+    user = auth_service.get_user_by_id(user_data["user_id"])
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    return user
+
+async def redirect_if_authenticated(
+    request: Request,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Redireciona usuário para dashboard se token válido presente."""
+    auth_header = request.headers.get("Authorization")
+    if auth_header:
+        scheme, _, token = auth_header.partition(" ")
+        if scheme.lower() == "bearer" and token:
+            user_data = auth_service.decode_access_token(token)
+            if user_data:
+                return RedirectResponse(url="/dashboard", status_code=302)

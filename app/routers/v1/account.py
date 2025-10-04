@@ -5,7 +5,6 @@ from app.dependencies.validation import validate_account_deletion, validate_pass
 from fastapi import APIRouter, Request, Depends, status
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
-from app.security import generate_csrf_token
 import logging
 
 logger = logging.getLogger(__name__)

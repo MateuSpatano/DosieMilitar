@@ -3,7 +3,6 @@ Router do banco de dados
 """
 from app.dependencies.auth import require_auth
 from app.dependencies.upload import get_download_file, get_upload_details, get_upload_service, validate_csv_upload
-from app.security import verify_csrf_token
 from app.services.upload_service import UploadService
 from fastapi import APIRouter, Request, Depends, HTTPException, status, Query, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse

@@ -1,7 +1,6 @@
 from http.client import HTTPException
 from typing import Annotated
-from app.db import get_db
-from app.dependencies.security import validate_csrf_token
+from app.db import get_db 
 from app.models import Upload
 from app.services.file_service import FileService
 from fastapi import Depends
@@ -80,7 +79,6 @@ def get_download_file(upload_id: int, db: Session = Depends(get_db)):
 
 def validate_csv_upload(
     request: Request, 
-    _csrf: Annotated[bool, Depends(validate_csrf_token)],
     file: UploadFile = File(...)
 ):
     """Dependência para validar o CSRF e a extensão do arquivo CSV."""

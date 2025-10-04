@@ -2,7 +2,6 @@ from fastapi import Form, Request, Depends, HTTPException, status
 from app.services.auth_service import AuthService
 from app.dependencies.auth import require_auth
 from app.dependencies.database import get_db
-from app.dependencies.security import validate_csrf_token
 from sqlalchemy.orm import Session
 
 def validate_passwords_match(
@@ -33,7 +32,6 @@ def validate_password_change(
     confirm_password: str = Form(...),
     auth_service: AuthService = Depends(get_db),
     current_user: dict = Depends(require_auth),
-    _csrf: bool = Depends(validate_csrf_token)
 ) -> bool:
     """Valida e processa alteração de senha"""
     if new_password != confirm_password:
@@ -64,7 +62,6 @@ def validate_account_deletion(
     confirm_email: str = Form(...),
     auth_service: AuthService = Depends(get_db),
     current_user: dict = Depends(require_auth),
-    _csrf: bool = Depends(validate_csrf_token)
 ) -> bool:
     """Valida e processa exclusão de conta"""
     if current_user["role"] == "operator":

@@ -29,15 +29,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configurar middleware de sessão
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=settings.secret_key,
-    max_age=86400,  # 24 horas
-    same_site="lax",
-    https_only=False  # True em produção com HTTPS
-)
-
 # Montar arquivos estáticos
 app.mount("/static", StaticFiles(directory="app/static", html=True), name="static")
 
@@ -95,14 +86,10 @@ async def startup_event():
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def root(request: Request):
-    """Página inicial - redireciona para login ou dashboard"""
-    # Verificar se usuário está logado
-    user = request.session.get("user")
-    
-    if user:
-        return RedirectResponse(url="/dashboard", status_code=302)
-    else:
-        return RedirectResponse(url="/login", status_code=302)
+    """Página inicial - serve o template base. O redirecionamento será tratado pelo JS."""
+
+    context = {"request": request}
+    return templates.TemplateResponse("base.html", context) 
 
 
 @app.get("/api/health")
