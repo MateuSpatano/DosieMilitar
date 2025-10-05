@@ -11,14 +11,13 @@
     </div>
 </div>
 
-<!-- Cards de Estatísticas -->
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card bg-primary text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 class="card-title">{{ stats.total_uploads }}</h4>
+                        <h4 class="card-title" id="totalUploadsValue">0</h4>
                         <p class="card-text">Total de Uploads</p>
                     </div>
                     <div class="align-self-center">
@@ -34,7 +33,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 class="card-title">{{ stats.total_rows or 0 }}</h4>
+                        <h4 class="card-title" id="totalRowsValue">0</h4>
                         <p class="card-text">Total de Linhas</p>
                     </div>
                     <div class="align-self-center">
@@ -50,13 +49,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 class="card-title">
-                            {% if stats.last_upload %}
-                                {{ stats.last_upload.uploaded_at.strftime('%d/%m/%Y') }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </h4>
+                        <h4 class="card-title" id="lastUploadDateValue">-</h4>
                         <p class="card-text">Último Upload</p>
                     </div>
                     <div class="align-self-center">
@@ -72,13 +65,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 class="card-title">
-                            {% if stats.last_upload %}
-                                {{ stats.last_upload.original_name[:20] }}{% if stats.last_upload.original_name|length > 20 %}...{% endif %}
-                            {% else %}
-                                Nenhum
-                            {% endif %}
-                        </h4>
+                        <h4 class="card-title" id="lastFileNameValue">Nenhum</h4>
                         <p class="card-text">Último Arquivo</p>
                     </div>
                     <div class="align-self-center">
@@ -90,167 +77,46 @@
     </div>
 </div>
 
-<!-- Seção de Gráficos Militares -->
-{% if military_stats %}
-<div class="row mb-4">
-    <div class="col-12">
-        <h3 class="h4 mb-3">
-            <i class="bi bi-shield-check"></i> Análise de Dados Militares
-        </h3>
+<div id="militaryStatsSection"> 
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="h4 mb-3">
+                <i class="bi bi-shield-check"></i> Análise de Dados Militares
+            </h3>
+        </div>
     </div>
-</div>
 
-<div class="row mb-4">
-    <!-- Distribuição por UF de Nascimento -->
-    {% if military_stats.uf_nascimento %}
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-geo-alt"></i> Distribuição por UF de Nascimento
-                </h5>
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4" id="ufNascimentoCard">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0"><i class="bi bi-geo-alt"></i> Distribuição por UF de Nascimento</h5></div>
+                <div class="card-body"><canvas id="ufNascimentoChart" width="400" height="300"></canvas></div>
             </div>
-            <div class="card-body">
-                <canvas id="ufNascimentoChart" width="400" height="300"></canvas>
+        </div>
+        
+        <div class="col-lg-6 mb-4" id="sexoCard">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0"><i class="bi bi-person-check"></i> Distribuição por Sexo</h5></div>
+                <div class="card-body"><canvas id="sexoChart" width="400" height="300"></canvas></div>
             </div>
         </div>
     </div>
-    {% endif %}
     
-    <!-- Distribuição por Sexo -->
-    {% if military_stats.sexo %}
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-person-check"></i> Distribuição por Sexo
-                </h5>
-            </div>
-            <div class="card-body">
-                <canvas id="sexoChart" width="400" height="300"></canvas>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-</div>
-
-<div class="row mb-4">
-    <!-- Distribuição por Estado Civil -->
-    {% if military_stats.estado_civil %}
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-heart"></i> Distribuição por Estado Civil
-                </h5>
-            </div>
-            <div class="card-body">
-                <canvas id="estadoCivilChart" width="400" height="300"></canvas>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    
-    <!-- Distribuição por Dispensa -->
-    {% if military_stats.dispensa %}
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-check-circle"></i> Status de Dispensa
-                </h5>
-            </div>
-            <div class="card-body">
-                <canvas id="dispensaChart" width="400" height="300"></canvas>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-</div>
-
-<div class="row mb-4">
-    <!-- Distribuição por Zona Residencial -->
-    {% if military_stats.zona_residencial %}
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-house"></i> Zona Residencial
-                </h5>
-            </div>
-            <div class="card-body">
-                <canvas id="zonaResidencialChart" width="400" height="300"></canvas>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    
-    <!-- Distribuição por Escolaridade -->
-    {% if military_stats.escolaridade %}
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-mortarboard"></i> Nível de Escolaridade
-                </h5>
-            </div>
-            <div class="card-body">
-                <canvas id="escolaridadeChart" width="400" height="300"></canvas>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-</div>
-
-<div class="row mb-4">
-    <!-- Distribuição por Ano de Nascimento -->
-    {% if military_stats.ano_nascimento %}
-    <div class="col-lg-8 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-calendar-range"></i> Distribuição por Década de Nascimento
-                </h5>
-            </div>
-            <div class="card-body">
-                <canvas id="anoNascimentoChart" width="400" height="300"></canvas>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    
-    <!-- Estatísticas Físicas -->
-    {% if military_stats.estatisticas_fisicas %}
-    <div class="col-lg-4 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-rulers"></i> Estatísticas Físicas
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    {% for medida, dados in military_stats.estatisticas_fisicas.items() %}
-                    <div class="col-12 mb-3">
-                        <h6 class="text-capitalize">{{ medida }}</h6>
-                        <div class="small">
-                            <div>Média: {{ "%.1f"|format(dados.media) }}</div>
-                            <div>Mediana: {{ "%.1f"|format(dados.mediana) }}</div>
-                            <div>Min: {{ "%.1f"|format(dados.min) }}</div>
-                            <div>Max: {{ "%.1f"|format(dados.max) }}</div>
-                        </div>
+    <div class="row mb-4">
+        <div class="col-lg-4 mb-4" id="physicalStatsCard">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0"><i class="bi bi-rulers"></i> Estatísticas Físicas</h5></div>
+                <div class="card-body">
+                    <div class="row" id="physicalStatsBody">
+                        <p class="text-center text-muted">Carregando...</p>
                     </div>
-                    {% endfor %}
                 </div>
             </div>
         </div>
     </div>
-    {% endif %}
 </div>
-{% endif %}
 
 <div class="row">
-    <!-- Gráfico de Distribuição de Tipos -->
     <div class="col-lg-8 mb-4">
         <div class="card">
             <div class="card-header">
@@ -258,74 +124,43 @@
                     <i class="bi bi-pie-chart"></i> Distribuição por Tipo de Dados
                 </h5>
             </div>
-            <div class="card-body">
-                <canvas id="dtypeChart" width="400" height="200"></canvas>
-            </div>
+            <div class="card-body"><canvas id="dtypeChart" width="400" height="200"></canvas></div>
         </div>
     </div>
     
-    <!-- Formulário de Upload -->
     <div class="col-lg-4 mb-4">
         <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-cloud-upload"></i> Upload de CSV
-                </h5>
-            </div>
+            <div class="card-header"><h5 class="card-title mb-0"><i class="bi bi-cloud-upload"></i> Upload de CSV</h5></div>
             <div class="card-body">
-                <form method="post" action="/upload-csv" enctype="multipart/form-data">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    
-                    <div class="mb-3">
-                        <label for="file" class="form-label">Selecionar Arquivo CSV</label>
-                        <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
-                        <div class="form-text">
-                            Apenas arquivos .csv são permitidos. Máximo: 500MB
-                        </div>
-                    </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-upload"></i> Enviar Arquivo
-                        </button>
-                    </div>
-                </form>
+                <div class="mb-3">
+                    <label for="csvFile" class="form-label">Selecionar Arquivo CSV</label>
+                    <input type="file" class="form-control" id="csvFile" accept=".csv" required>
+                    <div class="form-text">Apenas arquivos .csv são permitidos. Máximo: 500MB</div>
+                </div>
+                <div class="d-grid">
+                    <button id="uploadCsvBtn" class="btn btn-primary">
+                        <i class="bi bi-upload"></i> Enviar Arquivo
+                    </button>
+                </div>
+                <div id="uploadStatus" class="mt-2 text-muted small"></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Informações do Último Upload -->
-{% if stats.last_upload %}
-<div class="row">
+<div class="row" id="lastUploadDetailsRow" style="display: none;">
     <div class="col-12">
         <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-info-circle"></i> Detalhes do Último Upload
-                </h5>
-            </div>
+            <div class="card-header"><h5 class="card-title mb-0"><i class="bi bi-info-circle"></i> Detalhes do Último Upload</h5></div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-3">
-                        <strong>Arquivo:</strong><br>
-                        {{ stats.last_upload.original_name }}
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Data:</strong><br>
-                        {{ stats.last_upload.uploaded_at.strftime('%d/%m/%Y %H:%M') }}
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Linhas:</strong><br>
-                        {{ stats.last_upload.rows_total or 'N/A' }}
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Colunas:</strong><br>
-                        {{ stats.last_upload.cols_total or 'N/A' }}
-                    </div>
+                    <div class="col-md-3"><strong>Arquivo:</strong><br><span id="detailFileName"></span></div>
+                    <div class="col-md-3"><strong>Data:</strong><br><span id="detailFileDate"></span></div>
+                    <div class="col-md-3"><strong>Linhas:</strong><br><span id="detailFileRows"></span></div>
+                    <div class="col-md-3"><strong>Colunas:</strong><br><span id="detailFileCols"></span></div>
                 </div>
                 <div class="mt-3">
-                    <a href="/database/{{ stats.last_upload.id }}" class="btn btn-outline-primary btn-sm">
+                    <a href="#" id="detailFileLink" target="_self" class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-eye"></i> Ver Detalhes
                     </a>
                 </div>
@@ -333,243 +168,236 @@
         </div>
     </div>
 </div>
-{% endif %}
-{% endblock %}
 
-{% block scripts %}
 <script>
+const token = localStorage.getItem('access_token');
 // Cores padrão para os gráficos
 const chartColors = [
     '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
     '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
 ];
 
-// Gráfico de distribuição de tipos
-const ctx = document.getElementById('dtypeChart').getContext('2d');
-const chart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-        labels: {{ chart_data.labels | tojson }},
-        datasets: [{
-            data: {{ chart_data.data | tojson }},
-            backgroundColor: chartColors,
-            borderWidth: 2,
-            borderColor: '#fff'
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
-});
+/**
+ * Função utilitária para criar um gráfico Chart.js
+ * @param {string} canvasId O ID do canvas no HTML
+ * @param {string} type O tipo de gráfico ('bar', 'pie', 'line', etc.)
+ * @param {Array<string>} labels Rótulos do eixo/setores
+ * @param {Array<number>} data Valores de dados
+ * @param {Array<string>} backgroundColors Cores dos fundos
+ * @param {boolean} legendDisplay Define se a legenda deve ser exibida
+ * @param {object} customOptions Opções adicionais para o Chart.js
+ */
+function createChart(canvasId, type, labels, data, backgroundColors, legendDisplay = false, customOptions = {}) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return; // Sai se o canvas não existir
 
-{% if military_stats %}
-// Gráfico de UF de Nascimento
-{% if military_stats.uf_nascimento %}
-const ufNascimentoCtx = document.getElementById('ufNascimentoChart').getContext('2d');
-new Chart(ufNascimentoCtx, {
-    type: 'bar',
-    data: {
-        labels: {{ military_stats.uf_nascimento.labels | tojson }},
-        datasets: [{
-            label: 'Quantidade',
-            data: {{ military_stats.uf_nascimento.data | tojson }},
-            backgroundColor: '#36A2EB',
-            borderColor: '#36A2EB',
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: true
-            }
+    new Chart(ctx.getContext('2d'), {
+        type: type,
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Quantidade',
+                data: data,
+                backgroundColor: backgroundColors,
+                borderColor: backgroundColors.map(c => c.replace('0.2', '1')), // Para linhas/barras
+                borderWidth: 1,
+                // Opções específicas para gráficos de linha
+                ...(type === 'line' && { fill: true, tension: 0.4, backgroundColor: backgroundColors[0].replace('1', '0.2') })
+            }]
         },
-        plugins: {
-            legend: {
-                display: false
-            }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true }
+            },
+            plugins: {
+                legend: { position: 'bottom', display: legendDisplay }
+            },
+            ...customOptions
         }
-    }
-});
-{% endif %}
+    });
+}
 
-// Gráfico de Sexo
-{% if military_stats.sexo %}
-const sexoCtx = document.getElementById('sexoChart').getContext('2d');
-new Chart(sexoCtx, {
-    type: 'pie',
-    data: {
-        labels: {{ military_stats.sexo.labels | tojson }},
-        datasets: [{
-            data: {{ military_stats.sexo.data | tojson }},
-            backgroundColor: ['#FF6384', '#36A2EB'],
-            borderWidth: 2,
-            borderColor: '#fff'
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom'
+/**
+ * Função principal que busca os dados da API e renderiza o dashboard.
+ */
+async function loadDashboardData() {
+    try {
+        const response = await fetch(`/api/v1/dashboard`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${token}`
             }
+        });
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
         }
-    }
-});
-{% endif %}
+        const data = await response.json();
 
-// Gráfico de Estado Civil
-{% if military_stats.estado_civil %}
-const estadoCivilCtx = document.getElementById('estadoCivilChart').getContext('2d');
-new Chart(estadoCivilCtx, {
-    type: 'doughnut',
-    data: {
-        labels: {{ military_stats.estado_civil.labels | tojson }},
-        datasets: [{
-            data: {{ military_stats.estado_civil.data | tojson }},
-            backgroundColor: chartColors,
-            borderWidth: 2,
-            borderColor: '#fff'
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
-});
-{% endif %}
+        // ---------------------------------------------
+        // 1. ATUALIZAR CARDS DE ESTATÍSTICAS GERAIS (stats)
+        // ---------------------------------------------
+        document.getElementById('totalUploadsValue').innerText = data.stats.total_uploads.toLocaleString('pt-BR');
+        document.getElementById('totalRowsValue').innerText = data.stats.total_rows.toLocaleString('pt-BR');
 
-// Gráfico de Dispensa
-{% if military_stats.dispensa %}
-const dispensaCtx = document.getElementById('dispensaChart').getContext('2d');
-new Chart(dispensaCtx, {
-    type: 'pie',
-    data: {
-        labels: {{ military_stats.dispensa.labels | tojson }},
-        datasets: [{
-            data: {{ military_stats.dispensa.data | tojson }},
-            backgroundColor: ['#28a745', '#dc3545'],
-            borderWidth: 2,
-            borderColor: '#fff'
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
-});
-{% endif %}
+        // Detalhes do Último Upload
+        if (data.stats.last_upload) {
+            const lastUpload = data.stats.last_upload;
+            const uploadDate = new Date(lastUpload.uploaded_at);
+            
+            // Formatando data para o card
+            document.getElementById('lastUploadDateValue').innerText = uploadDate.toLocaleDateString('pt-BR');
+            
+            // Formatando nome do arquivo para o card (limitando a 20 caracteres)
+            const fileName = lastUpload.filename;
+            document.getElementById('lastFileNameValue').innerText = 
+                fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName;
 
-// Gráfico de Zona Residencial
-{% if military_stats.zona_residencial %}
-const zonaResidencialCtx = document.getElementById('zonaResidencialChart').getContext('2d');
-new Chart(zonaResidencialCtx, {
-    type: 'doughnut',
-    data: {
-        labels: {{ military_stats.zona_residencial.labels | tojson }},
-        datasets: [{
-            data: {{ military_stats.zona_residencial.data | tojson }},
-            backgroundColor: ['#4BC0C0', '#FFCE56'],
-            borderWidth: 2,
-            borderColor: '#fff'
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
-});
-{% endif %}
+            // Injetando detalhes do upload (na seção inferior)
+            document.getElementById('detailFileName').innerText = fileName;
+            document.getElementById('detailFileDate').innerText = uploadDate.toLocaleString('pt-BR');
+            document.getElementById('detailFileRows').innerText = lastUpload.rows_total ? lastUpload.rows_total.toLocaleString('pt-BR') : 'N/A';
+            document.getElementById('detailFileCols').innerText = lastUpload.cols_total ? lastUpload.cols_total.toLocaleString('pt-BR') : 'N/A';
+            document.getElementById('detailFileLink').href = `/database/${lastUpload.id}`;
+            document.getElementById('lastUploadDetailsRow').style.display = 'flex';
 
-// Gráfico de Escolaridade
-{% if military_stats.escolaridade %}
-const escolaridadeCtx = document.getElementById('escolaridadeChart').getContext('2d');
-new Chart(escolaridadeCtx, {
-    type: 'bar',
-    data: {
-        labels: {{ military_stats.escolaridade.labels | tojson }},
-        datasets: [{
-            label: 'Quantidade',
-            data: {{ military_stats.escolaridade.data | tojson }},
-            backgroundColor: '#9966FF',
-            borderColor: '#9966FF',
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        },
-        plugins: {
-            legend: {
-                display: false
-            }
+        } else {
+            document.getElementById('lastUploadDetailsRow').style.display = 'none';
         }
-    }
-});
-{% endif %}
 
-// Gráfico de Ano de Nascimento
-{% if military_stats.ano_nascimento %}
-const anoNascimentoCtx = document.getElementById('anoNascimentoChart').getContext('2d');
-new Chart(anoNascimentoCtx, {
-    type: 'line',
-    data: {
-        labels: {{ military_stats.ano_nascimento.labels | tojson }},
-        datasets: [{
-            label: 'Quantidade',
-            data: {{ military_stats.ano_nascimento.data | tojson }},
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: '#36A2EB',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        },
-        plugins: {
-            legend: {
-                display: false
-            }
+        // ---------------------------------------------
+        // 2. GRÁFICO DE DISTRIBUIÇÃO DE TIPOS (dtypeChart)
+        // ---------------------------------------------
+        if (data.chart_data && data.chart_data.data.length > 0) {
+            const backgroundColors = data.chart_data.labels.map((_, i) => chartColors[i % chartColors.length]);
+            createChart('dtypeChart', 'doughnut', data.chart_data.labels, data.chart_data.data, backgroundColors, true, { scales: { y: { display: false } } });
         }
+
+
+        // ---------------------------------------------
+        // 3. GRÁFICOS MILITARES (military_stats)
+        // ---------------------------------------------
+        const militaryStats = data.military_stats;
+        const militaryStatsSection = document.getElementById('militaryStatsSection');
+
+        if (Object.values(militaryStats).some(stat => stat !== null)) {
+            militaryStatsSection.style.display = 'block';
+
+            // Gráfico UF de Nascimento (Barra)
+            if (militaryStats.uf_nascimento) {
+                document.getElementById('ufNascimentoCard').style.display = 'block';
+                createChart('ufNascimentoChart', 'bar', militaryStats.uf_nascimento.labels, militaryStats.uf_nascimento.data, ['#36A2EB']);
+            } else {
+                document.getElementById('ufNascimentoCard').style.display = 'none';
+            }
+
+            // Gráfico Sexo (Pizza)
+            if (militaryStats.sexo) {
+                document.getElementById('sexoCard').style.display = 'block';
+                createChart('sexoChart', 'pie', militaryStats.sexo.labels, militaryStats.sexo.data, ['#FF6384', '#36A2EB'], true, { scales: { y: { display: false } } });
+            } else {
+                document.getElementById('sexoCard').style.display = 'none';
+            }
+            
+            // ... (Repita o padrão para estadoCivilChart, dispensaChart, etc.)
+            
+            // Gráfico de Ano de Nascimento (Linha)
+            if (militaryStats.ano_nascimento) {
+                // Configurações customizadas para o gráfico de linha
+                const lineOptions = { scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } };
+                createChart('anoNascimentoChart', 'line', militaryStats.ano_nascimento.labels, militaryStats.ano_nascimento.data, ['#36A2EB'], false, lineOptions);
+            }
+
+            // Estatísticas Físicas (Tabela de Texto)
+            if (militaryStats.estatisticas_fisicas) {
+                document.getElementById('physicalStatsCard').style.display = 'block';
+                const body = document.getElementById('physicalStatsBody');
+                body.innerHTML = ''; // Limpa o "Carregando..."
+
+                for (const [medida, dados] of Object.entries(militaryStats.estatisticas_fisicas)) {
+                    const colDiv = document.createElement('div');
+                    colDiv.className = 'col-12 mb-3';
+                    
+                    const content = `
+                        <h6 class="text-capitalize">${medida}</h6>
+                        <div class="small">
+                            <div>Média: ${dados.media.toFixed(1)}</div>
+                            <div>Mediana: ${dados.mediana.toFixed(1)}</div>
+                            <div>Min: ${dados.min.toFixed(1)}</div>
+                            <div>Max: ${dados.max.toFixed(1)}</div>
+                        </div>
+                    `;
+                    colDiv.innerHTML = content;
+                    body.appendChild(colDiv);
+                }
+            } else {
+                document.getElementById('physicalStatsCard').style.display = 'none';
+            }
+            
+        } else {
+            militaryStatsSection.style.display = 'none'; // Esconde a seção se não houver dados militares
+        }
+
+    } catch (error) {
+        console.error("Erro ao carregar os dados do dashboard:", error);
+        // Exibir uma mensagem de erro amigável ao usuário, se necessário
     }
+}
+
+document.getElementById('detailFileLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    const url = e.currentTarget.href;
+    window.location.href = url;
 });
-{% endif %}
-{% endif %}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('uploadCsvBtn').addEventListener('click', async () => {
+        const fileInput = document.getElementById('csvFile');
+        const statusText = document.getElementById('uploadStatus');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            statusText.innerText = 'Por favor, selecione um arquivo CSV.';
+            return;
+        }
+
+        if (!file.name.endsWith('.csv')) {
+            statusText.innerText = 'O arquivo deve ser .csv.';
+            return;
+        }
+
+        statusText.innerText = 'Enviando...';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+
+        try {
+            const response = await fetch('/api/v1/manage-file/upload-csv', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                statusText.innerText = 'Upload realizado com sucesso.';
+                loadDashboardData(); // Atualiza os dados do dashboard
+            } else {
+                statusText.innerText = `Erro: ${result.message || 'Não foi possível enviar o arquivo.'}`;
+            }
+        } catch (error) {
+            console.error('Erro ao enviar o arquivo:', error);
+            statusText.innerText = 'Erro inesperado. Verifique o console.';
+        }
+    });
+
+    // Carrega os dados do dashboard ao carregar a página
+    loadDashboardData();
+});
 </script>
 {% endblock %}

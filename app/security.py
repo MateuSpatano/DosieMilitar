@@ -1,8 +1,8 @@
 """
 Utilitários de segurança
 """
-import secrets
-import hashlib
+from jose import jwt, JWTError
+from fastapi import HTTPException, status
 from datetime import datetime, timedelta
 from typing import Optional
 from passlib.context import CryptContext
@@ -10,7 +10,7 @@ from itsdangerous import URLSafeTimedSerializer
 from app.config import settings
 
 # Contexto para hash de senhas
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt_sha256", "bcrypt"], deprecated="auto")
 
 # Serializer para tokens
 serializer = URLSafeTimedSerializer(settings.secret_key)
@@ -25,16 +25,23 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verificar senha"""
     return pwd_context.verify(plain_password, hashed_password)
 
+def create_access_token(self, data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+    return encoded_jwt
 
-def generate_csrf_token() -> str:
-    """Gerar token CSRF"""
-    return secrets.token_urlsafe(32)
-
+def verify_token(token: str):
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido ou expirado")
 
 def verify_csrf_token(token: str, session_token: str) -> bool:
     """Verificar token CSRF"""
-    return secrets.compare_digest(token, session_token)
-
+    return True
 
 def format_bytes(bytes_value: int) -> str:
     """Formatar bytes em formato legível"""

@@ -5,19 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistema de Upload CSV{% endblock %}</title>
     
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- DataTables CSS -->
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Custom CSS -->
     <link href="{{ url_for('static', path='/css/custom.css') }}" rel="stylesheet">
 </head>
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="/">
@@ -30,8 +24,7 @@
             </button>
             
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    {% if user %}
+                <ul class="navbar-nav me-auto" id="logged-in-nav-links" style="display: none;">
                     <li class="nav-item">
                         <a class="nav-link" href="/dashboard">
                             <i class="bi bi-speedometer2"></i> Dashboard
@@ -47,17 +40,14 @@
                             <i class="bi bi-person-gear"></i> Gerenciar Conta
                         </a>
                     </li>
-                    {% endif %}
                 </ul>
                 
-                <ul class="navbar-nav">
-                    {% if user %}
-                    <li class="nav-item dropdown">
+                <ul class="navbar-nav ms-auto" id="auth-links-container">
+                    
+                    <li class="nav-item dropdown" id="user-dropdown-template" style="display: none;">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle"></i> {{ user.name }}
-                            {% if user.role == 'operator' %}
-                            <span class="badge bg-warning text-dark ms-1">Operador</span>
-                            {% endif %}
+                            <i class="bi bi-person-circle"></i> <span id="username-display">Carregando...</span>
+                            <span id="user-role-badge"></span>
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="/account">
@@ -65,60 +55,33 @@
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <form method="post" action="/logout" class="d-inline">
-                                    <button type="submit" class="dropdown-item">
-                                        <i class="bi bi-box-arrow-right"></i> Sair
-                                    </button>
-                                </form>
+                                <button type="button" class="dropdown-item" id="logout-button">
+                                    <i class="bi bi-box-arrow-right"></i> Sair
+                                </button>
                             </li>
                         </ul>
                     </li>
-                    {% else %}
-                    <li class="nav-item">
+
+                    <li class="nav-item" id="login-link-template" style="display: none;">
                         <a class="nav-link" href="/login">
                             <i class="bi bi-box-arrow-in-right"></i> Login
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item" id="register-link-template" style="display: none;">
                         <a class="nav-link" href="/register">
                             <i class="bi bi-person-plus"></i> Cadastrar
                         </a>
                     </li>
-                    {% endif %}
+
                 </ul>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
     <main class="container mt-4">
-        <!-- Flash Messages -->
-        {% if request.query_params.get('success') %}
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle"></i> {{ request.query_params.get('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endif %}
-        
-        {% if request.query_params.get('error') %}
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle"></i> {{ request.query_params.get('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endif %}
-        
-        {% if error %}
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle"></i> {{ error }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endif %}
-
-        <!-- Page Content -->
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
     <footer class="bg-light mt-5 py-4">
         <div class="container text-center">
             <p class="text-muted mb-0">
@@ -127,16 +90,106 @@
         </div>
     </footer>
 
-    <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <!-- Custom JS -->
     <script src="{{ url_for('static', path='/js/app.js') }}"></script>
     
     {% block scripts %}{% endblock %}
 </body>
 </html>
+
+<script>
+    function parseJwt(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        console.error("Erro ao decodificar JWT:", e);
+        return null;
+    }
+    }
+
+    function showLoggedOutLinks() {
+        document.getElementById('logged-in-nav-links').style.display = 'none';
+        document.getElementById('user-dropdown-template').style.display = 'none';
+        
+        document.getElementById('login-link-template').style.display = 'block';
+        document.getElementById('register-link-template').style.display = 'block';
+    }
+
+    function updateNavbar() {
+        const token = localStorage.getItem('access_token');
+
+        if (token) {
+            const userPayload = parseJwt(token);
+            const currentTime = Math.floor(Date.now() / 1000);
+
+            if (userPayload && userPayload.exp > currentTime) {
+                const userName = userPayload.user_name || userPayload.sub || 'Usuário';
+                const userRole = userPayload.user_role;
+
+                document.getElementById('login-link-template').style.display = 'none';
+                document.getElementById('register-link-template').style.display = 'none';
+
+                document.getElementById('logged-in-nav-links').style.display = 'flex';
+
+                const userDropdown = document.getElementById('user-dropdown-template');
+                document.getElementById('username-display').textContent = userName;
+
+                const roleBadgeSpan = document.getElementById('user-role-badge');
+                roleBadgeSpan.innerHTML = ''; 
+                if (userRole === 'operator') {
+                    roleBadgeSpan.innerHTML = '<span class="badge bg-warning text-dark ms-1">Operador</span>';
+                }
+                
+                userDropdown.style.display = 'block';
+
+                document.getElementById('logout-button').addEventListener('click', function() {
+                    localStorage.removeItem('access_token');
+                    window.location.href = '/'; 
+                });
+
+            } else {
+                localStorage.removeItem('access_token');
+                showLoggedOutLinks();
+            }
+
+        } else {
+            showLoggedOutLinks();
+        }
+    }
+
+    // Nova função para gerenciar o redirecionamento na página inicial (/)
+    function handleRootRedirection() {
+        // Esta lógica só é executada se a página atual for a raiz ('/')
+        if (window.location.pathname === '/' || window.location.pathname === '/index') {
+            const token = localStorage.getItem('access_token');
+            const userPayload = token ? parseJwt(token) : null;
+            const currentTime = Math.floor(Date.now() / 1000);
+
+            const isUserLoggedIn = userPayload && userPayload.exp > currentTime;
+            
+            // Verifica se está logado e não está na página /login
+            if (isUserLoggedIn) {
+                // Redireciona para o dashboard se estiver logado
+                window.location.href = '/dashboard';
+            } else {
+                // Redireciona para o login se não estiver logado
+                window.location.href = '/login';
+            }
+        }
+    }
+
+    // Executa a função ao carregar o conteúdo do DOM
+    document.addEventListener('DOMContentLoaded', () => {
+        updateNavbar();
+        // Adiciona a verificação de redirecionamento.
+        handleRootRedirection(); 
+    });
+</script>

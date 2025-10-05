@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.openapi.utils import get_openapi
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 import os
@@ -15,7 +16,8 @@ from app.config import settings
 from app.db import create_tables
 from app.services.auth_service import AuthService
 from app.db import get_db
-from app.routers import auth, dashboard, database, account
+from .routers.v1.router import router as v1_router
+from .routers.pages import router as frontend_router
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -28,26 +30,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configurar middleware de sessão
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=settings.secret_key,
-    max_age=86400,  # 24 horas
-    same_site="lax",
-    https_only=False  # True em produção com HTTPS
-)
-
 # Montar arquivos estáticos
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static", html=True), name="static")
 
 # Configurar templates
 templates = Jinja2Templates(directory="app/templates")
 
 # Incluir routers
-app.include_router(auth.router)
-app.include_router(dashboard.router)
-app.include_router(database.router)
-app.include_router(account.router)
+app.include_router(v1_router, prefix="/api/v1")
+app.include_router(frontend_router)
 
 
 @app.middleware("http")
@@ -94,22 +85,13 @@ async def startup_event():
         raise
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def root(request: Request):
-    """Página inicial - redireciona para login ou dashboard"""
-    # Verificar se usuário está logado
-    user = request.session.get("user")
-    
-    if user:
-        return RedirectResponse(url="/dashboard", status_code=302)
-    else:
-        return RedirectResponse(url="/login", status_code=302)
+    """Página inicial - serve o template base. O redirecionamento será tratado pelo JS."""
 
+    context = {"request": request}
+    return templates.TemplateResponse("base.html", context) 
 
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {"status": "ok", "message": "Sistema funcionando"}
 
 
 # Handler para erros 404
@@ -133,3 +115,39 @@ async def internal_error_handler(request: Request, exc: Exception):
         "error": "Erro interno do servidor",
         "title": "500 - Erro interno"
     })
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+
+    # Define o esquema de segurança Bearer
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+        }
+    }
+
+    # Aplica segurança só nos endpoints que usam require_auth
+    for path in openapi_schema["paths"].values():
+        for operation in path.values():
+            # Aqui você pode marcar a operação que tenha "security" se quiser
+            # Ou você pode usar uma lógica simples para aplicar onde quiser
+            # Exemplo: verificar se a operação tem algum parâmetro 'Authorization'
+            # Para simplificar, aplica em todas:
+            if "security" not in operation:
+                continue
+            operation["security"] = [{"BearerAuth": []}]
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
